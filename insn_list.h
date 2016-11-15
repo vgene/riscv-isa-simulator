@@ -1,0 +1,2 @@
+DEFINE_INSN(add)
+DEFINE_INSN(sub)
