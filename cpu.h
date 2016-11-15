@@ -6,76 +6,82 @@
 
 // chain是一个链表
 // 
+#ifndef RISCV_CPU_T_H
+#define RISCV_CPU_T_H
 
 #define DEBUG
 
 #include "structs.h"
 #include "mmu.h"
+#include <vector>
+#include <stdio.h>
 
-#typedef uint64_t insn_bits_t;
+
+const int NXPR = 32;
+const int NFPR = 32;
+
+class cpu_t;
+//Typedef: instruction function
+typedef reg_t (*insn_func_t)(cpu_t*, insn_t, reg_t);
+//end of instruction function
+
+
+struct state_t
+{
+  reg_t pc;
+  regfile_t<reg_t, NXPR, true> XPR;
+  regfile_t<freg_t, NFPR, false> FPR;
+};
+
+struct insn_desc_t{
+  insn_bits_t match;
+  insn_bits_t mask;
+
+  insn_func_t rv64;
+  char* name;
+};
+
+
+
+reg_t illegal_instruction(cpu_t* cpu, insn_t insn, reg_t pc)
+{
+	//print insn.bits();
+	return 0;
+}
+
 
 class cpu_t
 {
-public:
-	cpu_t(char* isa){
-		mmu = new mmu_t();
-		state.pc=0;
-		register_instructions();
-	}
+private:
+	state_t state;//state contains PC and register file
+	mmu_t* mmu; //MMU
 
-	bool decode_insn()
+	insn_t c_insn; // current instruction
+	insn_desc_t c_desc; //current instruction description
+	// disasm_insn_t c_disasm; //current instruction diassembled
+	insn_func_t c_func; //current function
+	std::vector<insn_desc_t> instructions;
+
+	// DEBUG
+	void check_instructions()
 	{
-		insn_desc_t *p = &instructions[0];
+		printf("%s\n","START CHECK INSTRUCTIONS");
+		printf("%s\n",instructions[0].name);
+		printf("MASK/MATCH: %x %x\n", instructions[0].mask,instructions[0].match);
 
-		//find right instruction
-		while ((c_insn.bits() & p->mask) != p->match)
-			p++;
+		printf("%s\n",instructions[1].name);
+		printf("MASK/MATCH: %x %x\n", instructions[1].mask, instructions[1].match);
 
-		c_desc = *p;
-		c_func = p.rv64;
-
-		#ifdef DEBUG
-		disasm();
-		#endif
-
+		printf("%s%d\n","check instruction size:",instructions.size());
+		printf("%s\n\n\n","END CHECK INSTRUCTIONS");
 	}
 
-	reg_t illegal_instruction(insn_t insn, reg_t pc)
-	{
-		//print insn.bits();
-		return 0;
-	}
-
-	bool step()
-	{
-		insn_t* insn = new insn_t(mmu->load_insn(state.pc));
-		c_insn = *insn;
-
-		if (!decode_insn()){
-
-			return false;
-		}else{
-
-			pc = execute_insn();
-			return true;
-		}
-	}
-
-	//print char* name
-	void disasm(){
-		printf("%s%s\n", "disasm:?",c_desc.name);
-	}
-
-	reg_t execute_insn()
-	{
-		return c_func(insn, pc);
-	}
 
 	//register all instructions into vector instructions
 	void register_instructions()
 	{
 		#define REGISTER_INSN(name, match, mask) \
-		  extern reg_t rv64_##name(insn_t, reg_t); \
+		  extern reg_t rv64_##name(cpu_t*, insn_t, reg_t); \
 		  register_insn((insn_desc_t){match, mask, rv64_##name, #name});
 
 		#define DECLARE_INSN(name, match, mask) \
@@ -88,7 +94,7 @@ public:
 			#include "insn_list.h"
 		#undef DEFINE_INSN
 
-		register_insn({0, 0, &illegal_instruction, &illegal_instruction, "illegal"});
+		register_insn((insn_desc_t){0, 0, &illegal_instruction, "illegal"});
 	}
 
 	void register_insn(insn_desc_t desc)
@@ -96,19 +102,88 @@ public:
 		instructions.push_back(desc);
 	}
 
-	// DEBUG
-	void check_instructions()
+
+
+public:
+
+	cpu_t(){
+		cpu_t("");
+	}
+
+	cpu_t(char* isa){
+		mmu = new mmu_t();
+		state.pc=0;
+		register_instructions();
+		check_instructions();
+	}
+
+	void decode_insn()
 	{
+		insn_desc_t* p = &instructions[0];
+
+		while ((c_insn.bits() & p->mask) != p->match){
+			#ifdef DEBUG
+			printf("INSN: %s\n", p->name);
+			printf("HAVE: %x\n", c_insn.bits() & p->mask);
+			printf("WANT: %x\n",p->match);
+			#endif
+			p++;
+		}
+
+		#ifdef DEBUG
+		printf("INSN: %s\n", p->name);
+		printf("HAVE: %x\n", c_insn.bits() & p->mask);
+		printf("WANT: %x\n",p->match);
+		#endif
+
+		c_desc = *p;
+
+		printf("Instruction is: %s\n", c_desc.name);
+		c_func = c_desc.rv64;
+
+		#ifdef DEBUG
+		disasm();
+		#endif
 
 	}
 
-private:
-	state_t state;//state contains PC and register file
-	mmu_t* mmu; //MMU
 
-	insn_t c_insn; // current instruction
-	insn_desc_t c_desc; //current instruction description
-	// disasm_insn_t c_disasm; //current instruction diassembled
-	insn_func_t c_func; //current function
-	std::vector<insn_desc_t> instructions;
-}
+	void step(int steps)
+	{
+		while (steps>0){
+			printf("%d\n", instructions.size());
+
+			insn_t* insn = new insn_t(mmu->load_insn(state.pc));
+			c_insn = *insn;
+
+			decode_insn();
+			state.pc = execute_insn();
+			#ifdef DEBUG
+			printf("PC: %x\n", state.pc);
+			#endif
+			steps--;
+		}
+	}
+
+	//print char* name
+	void disasm(){
+		printf("%s%s\n", "disasm: ",c_desc.name);
+	}
+
+	reg_t execute_insn()
+	{
+		return c_func(this, c_insn, state.pc);
+	}
+
+	state_t* get_state(){
+		return &state;
+	}
+
+	mmu_t* get_mmu(){
+		return mmu;
+	}
+
+
+};
+
+#endif

@@ -25,7 +25,8 @@ Classes:
   insn_func_t
 
 */
-
+#ifndef RISCV_STRUCT_H
+#define RISCV_STRUCT_H
 
 #include <cstdint>
 #include <string.h>
@@ -36,55 +37,20 @@ typedef int64_t sreg_t;
 typedef uint64_t reg_t;
 typedef uint64_t freg_t;
 
-
-//Class: register file, if zero_reg first Register cannot be modify
-template <class T, size_t N, bool zero_reg>
-class regfile_t
-{
-public:
-  void write(size_t i, T value)
-  {
-    if (!zero_reg || i != 0)
-      data[i] = value;
-  }
-  const T& operator [] (size_t i) const
-  {
-    return data[i];
-  }
-private:
-  T data[N];
-};
-//end of register file
-
 //Typedef: instruction bits
 typedef uint64_t insn_bits_t;
 //end of instruction bits
 
-//Typedef: instruction function
-typedef reg_t (*insn_func_t)(insn_t, reg_t);
-//end of instruction function
+//to determine instruction encoding to be 16bits/32bits/48bits/64bits
+#define insn_length(x) \
+  (((x) & 0x03) < 0x03 ? 2 : \
+   ((x) & 0x1f) < 0x1f ? 4 : \
+   ((x) & 0x3f) < 0x3f ? 6 : \
+   8)
 
-typedef int64_t sreg_t;
-typedef uint64_t reg_t;
-typedef uint64_t freg_t;
+#define MAX_INSN_LENGTH 8
+#define PC_ALIGN 2
 
-const int NXPR = 32;
-const int NFPR = 32;
-
-struct state_t
-{
-  reg_t pc;
-  regfile_t<reg_t, NXPR, true> XPR;
-  regfile_t<freg_t, NFPR, false> FPR;
-};
-
-struct insn_desc_t{
-  insn_bits_t mask;
-  insn_bits_t match;
-
-  insn_func_t rv64;
-  char* name;
-};
 
 //Class: instruction
 class insn_t
@@ -132,6 +98,27 @@ private:
 };
 //end of instruction bits
 
+//Class: register file, if zero_reg first Register cannot be modify
+template <class T, size_t N, bool zero_reg>
+class regfile_t
+{
+public:
+  void write(size_t i, T value)
+  {
+    if (!zero_reg || i != 0)
+      data[i] = value;
+  }
+  const T& operator [] (size_t i) const
+  {
+    return data[i];
+  }
+private:
+  T data[N];
+};
+//end of register file
+
+
+
 //Helper Macros
 #define sext32(x) ((sreg_t)(int32_t)(x))
 #define zext32(x) ((reg_t)(uint32_t)(x))
@@ -153,8 +140,4 @@ private:
 #define WRITE_REG(reg, value) STATE.XPR.write(reg, value)
 #define WRITE_FREG(reg, value) DO_WRITE_FREG(reg, value)
 
-
-struct insn_fetch_t{
-  insn_func_t func;
-  insn_t insn;
-}
+#endif
