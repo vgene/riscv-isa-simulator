@@ -1,8 +1,3 @@
-#ifndef RISCV_MMU_H
-#define RISCV_MMU_H
-
-#include "structs.h"
-
 #include <cstdint>
 #include <cstdlib>
 #include <cstdio>
@@ -72,9 +67,8 @@ struct Elf64_Sym /* Symbol table : 24 bytes */
 };
 
 
-
-class mmu_t{
-
+class Mem
+{
 private:
   FILE *file;
 
@@ -108,46 +102,42 @@ private:
   void load_prog(FILE *file, int phnum);
 
   bool ban(const uint64_t &addr);  // hava no right to write
-
+  void dump(const uint64_t& addr, const int len=4);
 
   uint64_t read(const uint64_t addr, bool sign, const int len);
   void write(const uint64_t addr, uint64_t REG, const int len);
 
 public:
-  mmu_t(const char * path); // elf file's path
-  ~mmu_t();
+  Mem(const char * path); // elf file's path
+  ~Mem();
 
 
   Elf64_Addr start_addr();
   
 
-  insn_bits_t load_insn(reg_t PC);
+  uint64_t load_insn(uint64_t PC);
 
 
-  void write_8(const reg_t addr, reg_t REG);
-  void write_16(const reg_t addr, reg_t REG);
-  void write_32(const reg_t addr, reg_t REG);
-  void write_64(const reg_t addr, reg_t REG);
+  void write_8(const uint64_t addr, uint64_t REG);
+  void write_16(const uint64_t addr, uint64_t REG);
+  void write_32(const uint64_t addr, uint64_t REG);
+  void write_64(const uint64_t addr, uint64_t REG);
 
 
-  reg_t read_int8(const reg_t addr);
-  reg_t read_uint8(const reg_t addr);
+  uint64_t read_int8(const uint64_t addr);
+  uint64_t read_uint8(const uint64_t addr);
 
-  reg_t read_int16(const reg_t addr);
-  reg_t read_uint16(const reg_t addr);
+  uint64_t read_int16(const uint64_t addr);
+  uint64_t read_uint16(const uint64_t addr);
 
-  reg_t read_int32(const reg_t addr);
-  reg_t read_uint32(const reg_t addr);
+  uint64_t read_int32(const uint64_t addr);
+  uint64_t read_uint32(const uint64_t addr);
 
-  reg_t read_int64(const reg_t addr);
-  reg_t read_uin64(const reg_t addr);
+  uint64_t read_int64(const uint64_t addr);
+  uint64_t read_uin64(const uint64_t addr);
 
 
   //Debug
   void Debug_elf();
-
-  void dump(const uint64_t& addr, const int len=4);
- 
+  
 };
-
-#endif

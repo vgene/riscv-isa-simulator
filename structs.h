@@ -28,6 +28,7 @@ Classes:
 #ifndef RISCV_STRUCT_H
 #define RISCV_STRUCT_H
 
+#include "exception.h"
 #include <cstdint>
 #include <string.h>
 #include <strings.h>
@@ -120,12 +121,15 @@ private:
 
 
 //Helper Macros
+#define unlikely(x) __builtin_expect(x, 0)
+#define require(x) if (unlikely(!(x))) throw trap_illegal_instruction()
+
 #define sext32(x) ((sreg_t)(int32_t)(x))
 #define zext32(x) ((reg_t)(uint32_t)(x))
 #define sext_xlen(x) (((sreg_t)(x) << (64-xlen)) >> (64-xlen))
 #define zext_xlen(x) (((reg_t)(x) << (64-xlen)) >> (64-xlen))
 #define set_pc(x) \
-  do { if (unlikely(((x) & 2)) && !p->supports_extension('C')) \
+  do { if (unlikely(((x) & 2))) \
          throw trap_instruction_address_misaligned(x); \
        npc = sext_xlen(x); \
      } while(0)
@@ -140,4 +144,23 @@ private:
 #define WRITE_REG(reg, value) STATE.XPR.write(reg, value)
 #define WRITE_FREG(reg, value) DO_WRITE_FREG(reg, value)
 
+#define SHAMT (insn.i_imm() & 0x3F)
+#define BRANCH_TARGET (pc + insn.sb_imm())
+#define JUMP_TARGET (pc + insn.uj_imm())
+
+// FPU macros
+#define FRS1 READ_FREG(insn.rs1())
+#define FRS2 READ_FREG(insn.rs2())
+#define FRS3 READ_FREG(insn.rs3())
+#define dirty_fp_state (STATE.mstatus |= MSTATUS_FS | (xlen == 64 ? MSTATUS64_SD : MSTATUS32_SD))
+#define dirty_ext_state (STATE.mstatus |= MSTATUS_XS | (xlen == 64 ? MSTATUS64_SD : MSTATUS32_SD))
+#define DO_WRITE_FREG(reg, value) (STATE.FPR.write(reg, value), dirty_fp_state)
+#define WRITE_FRD(value) WRITE_FREG(insn.rd(), value)
+
+
+#define set_fp_exceptions ({ if (softfloat_exceptionFlags) { \
+                               dirty_fp_state; \
+                               STATE.fflags |= softfloat_exceptionFlags; \
+                             } \
+                             softfloat_exceptionFlags = 0; })
 #endif

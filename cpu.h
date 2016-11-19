@@ -4,22 +4,24 @@
 *
 */
 
-// chain是一个链表
-// 
 #ifndef RISCV_CPU_T_H
 #define RISCV_CPU_T_H
-
-#define DEBUG
 
 #include "structs.h"
 #include "mmu.h"
 #include <vector>
 #include <stdio.h>
 
+#define DEBUG
+// #define DEBUG_DUMP_REGISTER
+
+#define DEBUG_DUMP_MEMORY
+#define DUMP_MEM_ADDR 0x00010e60
+#define DUMP_LEN 100
 
 const int NXPR = 32;
 const int NFPR = 32;
-
+const reg_t SP_INIT=0x00000000fefffb50;
 class cpu_t;
 //Typedef: instruction function
 typedef reg_t (*insn_func_t)(cpu_t*, insn_t, reg_t);
@@ -65,14 +67,17 @@ private:
 	// DEBUG
 	void check_instructions()
 	{
+
+		int size = instructions.size();
 		printf("%s\n","START CHECK INSTRUCTIONS");
-		printf("%s\n",instructions[0].name);
-		printf("MASK/MATCH: %x %x\n", instructions[0].mask,instructions[0].match);
+		printf("Instruction size: %d\n",size);
 
-		printf("%s\n",instructions[1].name);
-		printf("MASK/MATCH: %x %x\n", instructions[1].mask, instructions[1].match);
+		for (int i=0;i<size;i++){
+			printf("%s\n","----------------");
+			printf("INSTRUCTION: %s\n",instructions[i].name);
+			printf("MASK/MATCH: %x %x\n", instructions[i].mask,instructions[i].match);
+		}
 
-		printf("%s%d\n","check instruction size:",instructions.size());
 		printf("%s\n\n\n","END CHECK INSTRUCTIONS");
 	}
 
@@ -102,27 +107,47 @@ private:
 		instructions.push_back(desc);
 	}
 
+	void dump_register_file(){
+		for (int i=0;i<32;i++){
+			printf("R[%d]: %llx\n", i, state.XPR[i]);
+		}
+	}
 
 
 public:
 
-	cpu_t(){
-		cpu_t("");
-	}
+	// cpu_t(){
+	// 	cpu_t("","");
+	// }
 
-	cpu_t(char* isa){
-		mmu = new mmu_t();
-		state.pc=0;
+	cpu_t(const char* isa, const char * path){
+		mmu = new mmu_t(path);
+
+		mmu->Debug_elf();
+
+		//set pc
+		state.pc=mmu->start_addr();
+
+		//set stack pointer
+		state.XPR.write(2, SP_INIT);
+
+		mmu->write_64(SP_INIT, 0x0);
+
 		register_instructions();
 		check_instructions();
+
 	}
 
+	//decode instructions
 	void decode_insn()
 	{
+
+
+		//get the first instruction
 		insn_desc_t* p = &instructions[0];
 
 		while ((c_insn.bits() & p->mask) != p->match){
-			#ifdef DEBUG
+			#ifdef DEBUG_ALL
 			printf("INSN: %s\n", p->name);
 			printf("HAVE: %x\n", c_insn.bits() & p->mask);
 			printf("WANT: %x\n",p->match);
@@ -130,15 +155,13 @@ public:
 			p++;
 		}
 
-		#ifdef DEBUG
+		#ifdef DEBUG_ALL
 		printf("INSN: %s\n", p->name);
 		printf("HAVE: %x\n", c_insn.bits() & p->mask);
 		printf("WANT: %x\n",p->match);
 		#endif
 
 		c_desc = *p;
-
-		printf("Instruction is: %s\n", c_desc.name);
 		c_func = c_desc.rv64;
 
 		#ifdef DEBUG
@@ -150,24 +173,34 @@ public:
 
 	void step(int steps)
 	{
-		while (steps>0){
-			printf("%d\n", instructions.size());
+
+		for (int step=0;step<steps; step++){
+
+#ifdef DEBUG
+printf("------\nSTEP: %d\n", step);
+#endif
+
+
 
 			insn_t* insn = new insn_t(mmu->load_insn(state.pc));
 			c_insn = *insn;
 
 			decode_insn();
 			state.pc = execute_insn();
-			#ifdef DEBUG
-			printf("PC: %x\n", state.pc);
-			#endif
-			steps--;
+
+#ifdef DEBUG_DUMP_REGISTER
+dump_register_file();
+#endif
+
+#ifdef DEBUG_DUMP_MEMORY
+mmu->dump(DUMP_MEM_ADDR,DUMP_LEN);
+#endif
 		}
 	}
 
 	//print char* name
 	void disasm(){
-		printf("%s%s\n", "disasm: ",c_desc.name);
+		printf("Disasm: %s\n",c_desc.name);
 	}
 
 	reg_t execute_insn()

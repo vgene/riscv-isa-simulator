@@ -47,12 +47,14 @@ const int NCSR = 4096;
 #define FSR_NXA  (FPEXC_NX << FSR_AEXC_SHIFT)
 #define FSR_AEXC (FSR_NVA | FSR_OFA | FSR_UFA | FSR_DZA | FSR_NXA)
 
+
+//to determine instruction encoding to be 16bits/32bits/48bits/64bits
 #define insn_length(x) \
   (((x) & 0x03) < 0x03 ? 2 : \
    ((x) & 0x1f) < 0x1f ? 4 : \
    ((x) & 0x3f) < 0x3f ? 6 : \
    8)
-  
+
 #define MAX_INSN_LENGTH 8
 #define PC_ALIGN 2
 
