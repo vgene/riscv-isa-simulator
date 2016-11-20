@@ -2,8 +2,8 @@
 #include "exception.h"
 #include <cstring>
 
-#define DEBUG
-#define DEBUG_EXT
+// #define DEBUG
+// #define DEBUG_EXT
 
 mmu_t::mmu_t(const char *path)
 {

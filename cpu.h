@@ -12,7 +12,7 @@
 #include <vector>
 #include <stdio.h>
 
-#define DEBUG
+// #define DEBUG
 // #define DEBUG_DUMP_REGISTER
 
 // #define DEBUG_DUMP_MEMORY

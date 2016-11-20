@@ -7,7 +7,8 @@
 #define RISCV_time 1062
 #define RISCV_exit 93
 #define RISCV_fstat 80
-
+#define RISCV_close 57
+#define RISCV_gettimeofday 169
 
 #include "cpu.h"
 #include "multi.h"
@@ -52,10 +53,12 @@ double d_Rounding(double a, int rm){
 void SIM_write(cpu_t* p, uint64_t addr, uint64_t len){
     //char buf[1000000];
     char* buf = (char*)malloc(len);
-    for(int i = 0;i < len;i ++){
-        buf[i]= (MMU.read_uint8(addr));
+    for(int i = 0; i < len;i ++){
+        buf[i]= (MMU.read_uint8(addr+i));
     }
-    WRITE_REG(10, write(1,(const void*)buf,len));
+
+    WRITE_REG(10, write(1,(void*)buf,len));
+
     delete buf;
 
 }
@@ -100,11 +103,16 @@ reg_t rv64_scall(cpu_t* p, insn_t insn, reg_t pc)
         case RISCV_brk:
             break;
         case RISCV_fstat:
-            if(addr == READ_REG(2) && READ_REG(12) == 0 && READ_REG(13) == 0)
-                WRITE_REG(10,isatty(READ_REG(10)));
-            else
+            // if(addr == READ_REG(2) && READ_REG(12) == 0 && READ_REG(13) == 0)
+            //     WRITE_REG(10,isatty(READ_REG(10)));
+            // else
                 WRITE_REG(10,fstat((int)READ_REG(10), (struct stat*)READ_REG(11)));
 
+            break;
+
+        case RISCV_close:
+            break;
+        case RISCV_gettimeofday:
             break;
         default:
             printf("Unknown system call! %llx", scall_num);
