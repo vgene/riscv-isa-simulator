@@ -140,7 +140,7 @@ public:
   reg_t read_uint32(const reg_t addr);
 
   reg_t read_int64(const reg_t addr);
-  reg_t read_uin64(const reg_t addr);
+  reg_t read_uint64(const reg_t addr);
 
 
   //Debug

@@ -4,9 +4,10 @@
 #define DEBUG
 
 int main(){
-	cpu_t* cpu=new cpu_t("","/Users/zyxu/Desktop/school/体系实习/riscv-simulator/sort_rv64");
+	cpu_t* cpu=new cpu_t("","/Users/zyxu/Desktop/school/体系实习/riscv-simulator/hello");
 
-	cpu->step(1000);
+
+	cpu->step(50000);
 
 	return 0;
 }

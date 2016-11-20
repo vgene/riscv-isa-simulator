@@ -72,3 +72,24 @@ DEFINE_INSN(remw)
 DEFINE_INSN(remuw)
 
 DEFINE_INSN(scall)
+
+DEFINE_INSN(csrrw)
+DEFINE_INSN(csrrc)
+DEFINE_INSN(csrrs)
+
+DEFINE_INSN(fence)
+
+DEFINE_INSN(fld)
+DEFINE_INSN(flw)
+DEFINE_INSN(fsd)
+DEFINE_INSN(fsw)
+
+DEFINE_INSN(fmv_s_x)
+DEFINE_INSN(fcvt_l_d)
+DEFINE_INSN(fcvt_d_l)
+DEFINE_INSN(fmul_d)
+DEFINE_INSN(fdiv_d)
+DEFINE_INSN(fmul_s)
+DEFINE_INSN(fdiv_s)
+
+// DEFINE_INSN(sret)

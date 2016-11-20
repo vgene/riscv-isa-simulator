@@ -148,14 +148,42 @@ private:
 #define BRANCH_TARGET (pc + insn.sb_imm())
 #define JUMP_TARGET (pc + insn.uj_imm())
 
+
+#define get_field(reg, mask) (((reg) & (decltype(reg))(mask)) / ((mask) & ~((mask) << 1)))
+#define set_field(reg, mask, val) (((reg) & ~(decltype(reg))(mask)) | (((decltype(reg))(val) * ((mask) & ~((mask) << 1))) & (decltype(reg))(mask)))
+#define FP_RD_NE  0
+#define FP_RD_0   1
+#define FP_RD_DN  2
+#define FP_RD_UP  3
+#define FP_RD_NMM 4
+
+#define FSR_RD_SHIFT 5
+#define FSR_RD   (0x7 << FSR_RD_SHIFT)
+
+#define FPEXC_NX 0x01
+#define FPEXC_UF 0x02
+#define FPEXC_OF 0x04
+#define FPEXC_DZ 0x08
+#define FPEXC_NV 0x10
+
+#define FSR_AEXC_SHIFT 0
+#define FSR_NVA  (FPEXC_NV << FSR_AEXC_SHIFT)
+#define FSR_OFA  (FPEXC_OF << FSR_AEXC_SHIFT)
+#define FSR_UFA  (FPEXC_UF << FSR_AEXC_SHIFT)
+#define FSR_DZA  (FPEXC_DZ << FSR_AEXC_SHIFT)
+#define FSR_NXA  (FPEXC_NX << FSR_AEXC_SHIFT)
+#define FSR_AEXC (FSR_NVA | FSR_OFA | FSR_UFA | FSR_DZA | FSR_NXA)
 // FPU macros
 #define FRS1 READ_FREG(insn.rs1())
 #define FRS2 READ_FREG(insn.rs2())
 #define FRS3 READ_FREG(insn.rs3())
-#define dirty_fp_state (STATE.mstatus |= MSTATUS_FS | (xlen == 64 ? MSTATUS64_SD : MSTATUS32_SD))
-#define dirty_ext_state (STATE.mstatus |= MSTATUS_XS | (xlen == 64 ? MSTATUS64_SD : MSTATUS32_SD))
-#define DO_WRITE_FREG(reg, value) (STATE.FPR.write(reg, value), dirty_fp_state)
+#define DO_WRITE_FREG(reg, value) (STATE.FPR.write(reg, value))
 #define WRITE_FRD(value) WRITE_FREG(insn.rd(), value)
+
+#define RM ({ int rm = insn.rm(); \
+              if(rm == 7) rm = STATE.frm; \
+              if(rm > 4) throw trap_illegal_instruction(); \
+              rm; })
 
 
 #define set_fp_exceptions ({ if (softfloat_exceptionFlags) { \
@@ -163,4 +191,26 @@ private:
                                STATE.fflags |= softfloat_exceptionFlags; \
                              } \
                              softfloat_exceptionFlags = 0; })
+
+
+
+/* Sentinel PC values to serialize simulator pipeline */
+#define PC_SERIALIZE_BEFORE 3
+#define PC_SERIALIZE_AFTER 5
+#define invalid_pc(pc) ((pc) & 1)
+
+/* Convenience wrappers to simplify softfloat code sequences */
+#define f32(x) ((float_t){(uint32_t)x})
+#define f64(x) ((double_t){(uint64_t)x})
+
+#define validate_csr(which, write) ({ \
+  if (!STATE.serialized) return PC_SERIALIZE_BEFORE; \
+  STATE.serialized = false; \
+  unsigned csr_priv = get_field((which), 0x300); \
+  unsigned csr_read_only = get_field((which), 0xC00) == 3; \
+  if (((write) && csr_read_only) || STATE.prv < csr_priv) \
+    throw trap_illegal_instruction(); \
+  (which); })
+
+
 #endif

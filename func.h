@@ -1,19 +1,120 @@
 #ifndef RISCV_FUNC_H
 #define RISCV_FUNC_H
 
+#define RISCV_brk 214
+#define RISCV_write 64
+#define RISCV_read 63
+#define RISCV_time 1062
+#define RISCV_exit 93
+#define RISCV_fstat 80
+
+
 #include "cpu.h"
 #include "multi.h"
+#include <math.h>
+#include <unistd.h>
+#include <cstdint>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/times.h>
 
 const int PC_INC = 4;
 const int xlen =64;
 
 
+
+double d_Rounding(double a, int rm){
+    switch(rm){
+        case 0:{
+            return rint(a);
+            break;
+        }
+        case 1:{
+            return trunc(a);
+            break;
+        }
+        case 2:{
+            return floor(a); 
+            break;
+        }
+        case 3:{
+            return ceil(a);
+            break;
+        }
+        default :{
+            return a;
+        }
+    }
+}
+
+
+void SIM_write(cpu_t* p, uint64_t addr, uint64_t len){
+    //char buf[1000000];
+    char* buf = (char*)malloc(len);
+    for(int i = 0;i < len;i ++){
+        buf[i]= (MMU.read_uint8(addr));
+    }
+    WRITE_REG(10, write(1,(const void*)buf,len));
+    delete buf;
+
+}
+void SIM_read(cpu_t* p, uint64_t addr, uint64_t len){
+    char* buf=(char*)malloc(len);
+    int read_num=read(0,(void*)buf,len);
+
+    for(int i = 0;i < read_num ; i ++){
+        MMU.write_8(addr+i,buf[i]);
+    }
+    delete buf;
+
+    WRITE_REG(10,read_num);
+}
+
 reg_t rv64_scall(cpu_t* p, insn_t insn, reg_t pc)
 {
+    // syscall，系统调用号存在17号寄存器中，
+    // 数据大小在R[12]寄存器中，地址在R[11]中
+
+
     reg_t npc = sext_xlen(pc + PC_INC);
-    exit(0);
+
+    uint64_t scall_num= READ_REG(17);
+    uint64_t addr = READ_REG(11);
+    uint64_t len = READ_REG(12); 
+
+
+    switch(scall_num)
+    {
+        case RISCV_write:
+            SIM_write(p,addr,len);
+            break;
+        case RISCV_read://先读到一个数组里，再放入map
+            SIM_read(p,addr,len);
+            break;
+        case RISCV_time:
+            WRITE_REG(10,(reg_t)time((time_t*)(addr)));
+            break;
+        case RISCV_exit:
+            exit(0);
+        case RISCV_brk:
+            break;
+        case RISCV_fstat:
+            if(addr == READ_REG(2) && READ_REG(12) == 0 && READ_REG(13) == 0)
+                WRITE_REG(10,isatty(READ_REG(10)));
+            else
+                WRITE_REG(10,fstat((int)READ_REG(10), (struct stat*)READ_REG(11)));
+
+            break;
+        default:
+            printf("Unknown system call! %llx", scall_num);
+            exit(1);
+    }
+
     return npc;
 }
+
+
 
 reg_t rv64_add(cpu_t* p, insn_t insn, reg_t pc)
 {
@@ -181,6 +282,8 @@ if(RS1 == RS2)
 
     return npc;
 }
+
+
 reg_t rv64_bne(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
@@ -660,47 +763,194 @@ else
     return npc;
 }
 
+reg_t rv64_fence(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+    return npc;
+}
+
 
 /*
-FLW
-FSW
-FMADD
-FMSUB.S
-FNMSUB.S
-FNMSUB.S
-FNMADD.S
-FADD.S
-FSUB.S
-FMUL.S
-FDIV.S
-FSQRT.S
-FSGNJ.S
-FSGNJX.S
-FMIN.S
-FMAX.S
-FCVT.W.S
-FCVT.WU.S
-FMV.X.S
-FEQ.S
-FLT.S
-FLE.S
-FCLASS.S
-FCVT.S.W
-FCVT.S.WU
-FMV.S.X
-FRCSR
-FRRM
-FRFLAGS
-FSCSR
-FSRM
-FSFLAGS
-FSRMI
-FSFLAGSI
-FCVT.L.S
-FCVT.LU.S
-FCVT.S.L
-FCVT.S.LU
+csrrw
+csrrc
+csrrs*/
+reg_t rv64_csrrw(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+// int csr = validate_csr(insn.csr(), true);
+// reg_t old = p->get_csr(csr);
+// p->set_csr(csr, RS1);
+// WRITE_RD(sext_xlen(old));
+
+    return npc;
+}
+
+
+reg_t rv64_csrrc(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+// int csr = validate_csr(insn.csr(), true);
+// reg_t old = p->get_csr(csr);
+// p->set_csr(csr, old & ~RS1);
+// WRITE_RD(sext_xlen(old));
+
+    return npc;
+}
+
+reg_t rv64_csrrs(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+// int csr = validate_csr(insn.csr(), insn.rs1() != 0);
+// reg_t old = p->get_csr(csr);
+// p->set_csr(csr, old | RS1);
+// WRITE_RD(sext_xlen(old));
+
+    return npc;
+}
+
+/*
+fld
+flw
+fsw
+fsd
 */
+
+reg_t rv64_fld(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+WRITE_FRD(MMU.read_int64(RS1 + insn.i_imm()));
+
+    return npc;
+}
+
+reg_t rv64_flw(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+WRITE_FRD(MMU.read_uint32(RS1 + insn.i_imm()));
+
+    return npc;
+}
+
+reg_t rv64_fsd(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+MMU.write_64(RS1 + insn.s_imm(), FRS2);
+
+    return npc;
+}
+
+reg_t rv64_fsw(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+MMU.write_32(RS1 + insn.s_imm(), FRS2);
+
+    return npc;
+}
+
+/*
+
+fmul_d
+fdiv_d
+fmul_s
+fdiv_s
+
+*/
+
+
+reg_t rv64_fmul_d(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+WRITE_FRD(f64(FRS1)*f64(FRS2));
+
+    return npc;
+}
+
+reg_t rv64_fdiv_d(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+WRITE_FRD(f64(FRS1)/f64(FRS2));
+
+    return npc;
+}
+
+reg_t rv64_fmul_s(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+WRITE_FRD(f32(FRS1)*f32(FRS2));
+
+    return npc;
+}
+
+reg_t rv64_fdiv_s(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+WRITE_FRD(f32(FRS1)/f32(FRS2));
+
+    return npc;
+}
+
+
+/*
+fmv_s_x
+fcvt_d_l
+fcvt_l_d
+*/
+reg_t rv64_fmv_s_x(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+WRITE_FRD(zext32(RS1));
+
+    return npc;
+}
+
+
+reg_t rv64_fcvt_d_l(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+
+WRITE_FRD((double)RS1);
+
+    return npc;
+}
+
+reg_t rv64_fcvt_l_d(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+WRITE_RD((reg_t)d_Rounding(RS1, insn.rm()));
+
+    return npc;
+}
+
+
+
+reg_t rv64_sret(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+// switch (get_field(STATE.mstatus, MSTATUS_PRV))
+// {
+//   case PRV_S: set_pc(p->get_state()->sepc); break;
+//   case PRV_M: set_pc(p->get_state()->mepc); break;
+//   default: abort();
+// }
+
+    return npc;
+}
 
 
 // reg_t rv64_flw(cpu_t* p, insn_t insn, reg_t pc)

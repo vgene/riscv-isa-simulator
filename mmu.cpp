@@ -3,6 +3,7 @@
 #include <cstring>
 
 #define DEBUG
+#define DEBUG_EXT
 
 mmu_t::mmu_t(const char *path)
 {
@@ -216,18 +217,20 @@ uint64_t mmu_t::read(const uint64_t addr, bool sign, const int len)
 	uint64_t retval = 0;
 	int shift = 0; 
 
-	
 	for (int i = 0; i < len; ++i, ++cur_addr)
 	{
 		auto iter = mem.find(cur_addr);
+
+
 		if(iter != mem.end() || iter->first == cur_addr)
 		{
-			retval |= iter->second << shift;
+			retval = retval |(((uint64_t)iter->second) << shift);
 			shift += 8;
 		}
 		else
 		{
 			printf("ADDR/LEN/ITER:%llx/%d/%d\n", addr, len, i);
+			// return 0;
 			throw invalid_address(addr, cur_addr);
 		}
 	}
@@ -262,6 +265,8 @@ void mmu_t::write(const uint64_t addr, uint64_t REG, const int len)
 	#endif
 	uint64_t cur_addr = addr;
 	uint64_t val = REG;
+	
+	
 
 	if(ban(addr) || ban(addr + len - 1))
 		throw no_permission(addr, addr + len - 1);
@@ -345,7 +350,7 @@ reg_t mmu_t::read_int64(const reg_t addr)
 	return read(addr, true, sizeof(int64_t));
 }
 
-reg_t mmu_t::read_uin64(const reg_t addr)
+reg_t mmu_t::read_uint64(const reg_t addr)
 {
 	return read(addr, false, sizeof(uint64_t));
 }
