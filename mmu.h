@@ -110,8 +110,7 @@ private:
   bool ban(const uint64_t &addr);  // hava no right to write
 
 
-  uint64_t read(const uint64_t addr, bool sign, const int len);
-  void write(const uint64_t addr, uint64_t REG, const int len);
+
 
 public:
   mmu_t(const char * path); // elf file's path
@@ -122,6 +121,10 @@ public:
   
 
   insn_bits_t load_insn(reg_t PC);
+
+  uint64_t read(const uint64_t addr, bool sign, const int len);
+  void write(const uint64_t addr, uint64_t REG, const int len);
+  void write_bare(const uint64_t addr, char* val, const int len);
 
 
   void write_8(const reg_t addr, reg_t REG);

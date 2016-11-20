@@ -18,7 +18,7 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/times.h>
+#include <sys/time.h>
 
 const int PC_INC = 4;
 const int xlen =64;
@@ -106,14 +106,23 @@ reg_t rv64_scall(cpu_t* p, insn_t insn, reg_t pc)
             // if(addr == READ_REG(2) && READ_REG(12) == 0 && READ_REG(13) == 0)
             //     WRITE_REG(10,isatty(READ_REG(10)));
             // else
-                WRITE_REG(10,fstat((int)READ_REG(10), (struct stat*)READ_REG(11)));
+                WRITE_REG(10,fstat((int)READ_REG(10), (struct stat*)NULL));
 
             break;
 
         case RISCV_close:
             break;
-        case RISCV_gettimeofday:
+        case RISCV_gettimeofday:{
+            uint64_t tv_addr = READ_REG(10);
+            // WRITE_REG(10,times((struct tms*)READ_REG(10)));
+            struct timeval* tv;
+            tv = new timeval;
+            WRITE_REG(10,gettimeofday(tv,(struct timezone *)NULL));
+
+            MMU.write_bare(tv_addr, (char*)tv, sizeof(tv));
+            delete tv;
             break;
+        }
         default:
             printf("Unknown system call! %llx", scall_num);
             exit(1);

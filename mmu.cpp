@@ -2,7 +2,7 @@
 #include "exception.h"
 #include <cstring>
 
-// #define DEBUG
+#define DEBUG
 // #define DEBUG_EXT
 
 mmu_t::mmu_t(const char *path)
@@ -292,6 +292,32 @@ void mmu_t::write(const uint64_t addr, uint64_t REG, const int len)
 	}
 }
 
+
+void mmu_t::write_bare(const uint64_t addr, char* val, const int len)
+{
+
+	uint64_t cur_addr = addr;
+
+	if(ban(addr) || ban(addr + len - 1))
+		throw no_permission(addr, addr + len - 1);
+
+	for (int i = 0; i < len; ++i, ++cur_addr)
+		{
+			auto iter = mem.find(cur_addr);
+			if(iter != mem.end() || iter->first == cur_addr)
+			{
+				iter->second = val[i];
+			}
+			else
+			{
+				mem.insert(std::pair<uint64_t, uint8_t>(cur_addr, val[i]));
+			}
+
+	#ifdef DEBUG_EXT
+			printf("MEM INSERT%x\n", mem.find(cur_addr)->second); 
+	#endif
+		}
+}
 
 void mmu_t::write_8(const reg_t addr, reg_t REG)
 {

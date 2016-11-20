@@ -12,8 +12,8 @@
 #include <vector>
 #include <stdio.h>
 
-// #define DEBUG
-// #define DEBUG_DUMP_REGISTER
+#define DEBUG
+#define DEBUG_DUMP_REGISTER
 
 // #define DEBUG_DUMP_MEMORY
 // #define DUMP_MEM_ADDR 0x00010e60
@@ -216,6 +216,7 @@ printf("------\nSTEP: %d\n", step);
 
 			decode_insn();
 			state.pc = execute_insn();
+
 
 #ifdef DEBUG_DUMP_REGISTER
 dump_register_file();
