@@ -4,7 +4,7 @@
 #define DEBUG
 
 int main(){
-	cpu_t* cpu=new cpu_t("","/Users/zyxu/Desktop/school/体系实习/riscv-simulator/tests/gcc_dry2_2");
+	cpu_t* cpu=new cpu_t("/Users/zyxu/Desktop/school/体系实习/riscv-simulator/tests/test_3_rv");
 
 
 	cpu->step(1000000);
