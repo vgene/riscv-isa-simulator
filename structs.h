@@ -73,24 +73,25 @@ public:
   uint64_t rm() { return x(12, 3); }
   uint64_t csr() { return x(20, 12); }
 
-  int64_t rvc_imm() { return x(2, 5) + (xs(12, 1) << 5); }
-  int64_t rvc_zimm() { return x(2, 5) + (x(12, 1) << 5); }
-  int64_t rvc_addi4spn_imm() { return (x(6, 1) << 2) + (x(5, 1) << 3) + (x(11, 2) << 4) + (x(7, 4) << 6); }
-  int64_t rvc_addi16sp_imm() { return (x(6, 1) << 4) + (x(2, 1) << 5) + (x(5, 1) << 6) + (x(3, 2) << 7) + (xs(12, 1) << 9); }
-  int64_t rvc_lwsp_imm() { return (x(4, 3) << 2) + (x(12, 1) << 5) + (x(2, 2) << 6); }
-  int64_t rvc_ldsp_imm() { return (x(5, 2) << 3) + (x(12, 1) << 5) + (x(2, 3) << 6); }
-  int64_t rvc_swsp_imm() { return (x(9, 4) << 2) + (x(7, 2) << 6); }
-  int64_t rvc_sdsp_imm() { return (x(10, 3) << 3) + (x(7, 3) << 6); }
-  int64_t rvc_lw_imm() { return (x(6, 1) << 2) + (x(10, 3) << 3) + (x(5, 1) << 6); }
-  int64_t rvc_ld_imm() { return (x(10, 3) << 3) + (x(5, 2) << 6); }
-  int64_t rvc_j_imm() { return (x(3, 3) << 1) + (x(11, 1) << 4) + (x(2, 1) << 5) + (x(7, 1) << 6) + (x(6, 1) << 7) + (x(9, 2) << 8) + (x(8, 1) << 10) + (xs(12, 1) << 11); }
-  int64_t rvc_b_imm() { return (x(3, 2) << 1) + (x(10, 2) << 3) + (x(2, 1) << 5) + (x(5, 2) << 6) + (xs(12, 1) << 8); }
-  int64_t rvc_simm3() { return x(10, 3); }
-  uint64_t rvc_rd() { return rd(); }
-  uint64_t rvc_rs1() { return rd(); }
-  uint64_t rvc_rs2() { return x(2, 5); }
-  uint64_t rvc_rs1s() { return 8 + x(7, 3); }
-  uint64_t rvc_rs2s() { return 8 + x(2, 3); }
+  // int64_t rvc_imm() { return x(2, 5) + (xs(12, 1) << 5); }
+  // int64_t rvc_zimm() { return x(2, 5) + (x(12, 1) << 5); }
+  // int64_t rvc_addi4spn_imm() { return (x(6, 1) << 2) + (x(5, 1) << 3) + (x(11, 2) << 4) + (x(7, 4) << 6); }
+  // int64_t rvc_addi16sp_imm() { return (x(6, 1) << 4) + (x(2, 1) << 5) + (x(5, 1) << 6) + (x(3, 2) << 7) + (xs(12, 1) << 9); }
+  // int64_t rvc_lwsp_imm() { return (x(4, 3) << 2) + (x(12, 1) << 5) + (x(2, 2) << 6); }
+  // int64_t rvc_ldsp_imm() { return (x(5, 2) << 3) + (x(12, 1) << 5) + (x(2, 3) << 6); }
+  // int64_t rvc_swsp_imm() { return (x(9, 4) << 2) + (x(7, 2) << 6); }
+  // int64_t rvc_sdsp_imm() { return (x(10, 3) << 3) + (x(7, 3) << 6); }
+  // int64_t rvc_lw_imm() { return (x(6, 1) << 2) + (x(10, 3) << 3) + (x(5, 1) << 6); }
+  // int64_t rvc_ld_imm() { return (x(10, 3) << 3) + (x(5, 2) << 6); }
+  // int64_t rvc_j_imm() { return (x(3, 3) << 1) + (x(11, 1) << 4) + (x(2, 1) << 5) + (x(7, 1) << 6) + (x(6, 1) << 7) + (x(9, 2) << 8) + (x(8, 1) << 10) + (xs(12, 1) << 11); }
+  // int64_t rvc_b_imm() { return (x(3, 2) << 1) + (x(10, 2) << 3) + (x(2, 1) << 5) + (x(5, 2) << 6) + (xs(12, 1) << 8); }
+  // int64_t rvc_simm3() { return x(10, 3); }
+  // uint64_t rvc_rd() { return rd(); }
+  // uint64_t rvc_rs1() { return rd(); }
+  // uint64_t rvc_rs2() { return x(2, 5); }
+  // uint64_t rvc_rs1s() { return 8 + x(7, 3); }
+  // uint64_t rvc_rs2s() { return 8 + x(2, 3); }
+
 private:
   insn_bits_t b;
   uint64_t x(int lo, int len) { return (b >> lo) & ((insn_bits_t(1) << len)-1); }
@@ -160,20 +161,21 @@ private:
 #define FSR_RD_SHIFT 5
 #define FSR_RD   (0x7 << FSR_RD_SHIFT)
 
-#define FPEXC_NX 0x01
-#define FPEXC_UF 0x02
-#define FPEXC_OF 0x04
-#define FPEXC_DZ 0x08
-#define FPEXC_NV 0x10
+// #define FPEXC_NX 0x01
+// #define FPEXC_UF 0x02
+// #define FPEXC_OF 0x04
+// #define FPEXC_DZ 0x08
+// #define FPEXC_NV 0x10
 
-#define FSR_AEXC_SHIFT 0
-#define FSR_NVA  (FPEXC_NV << FSR_AEXC_SHIFT)
-#define FSR_OFA  (FPEXC_OF << FSR_AEXC_SHIFT)
-#define FSR_UFA  (FPEXC_UF << FSR_AEXC_SHIFT)
-#define FSR_DZA  (FPEXC_DZ << FSR_AEXC_SHIFT)
-#define FSR_NXA  (FPEXC_NX << FSR_AEXC_SHIFT)
-#define FSR_AEXC (FSR_NVA | FSR_OFA | FSR_UFA | FSR_DZA | FSR_NXA)
+// #define FSR_AEXC_SHIFT 0
+// #define FSR_NVA  (FPEXC_NV << FSR_AEXC_SHIFT)
+// #define FSR_OFA  (FPEXC_OF << FSR_AEXC_SHIFT)
+// #define FSR_UFA  (FPEXC_UF << FSR_AEXC_SHIFT)
+// #define FSR_DZA  (FPEXC_DZ << FSR_AEXC_SHIFT)
+// #define FSR_NXA  (FPEXC_NX << FSR_AEXC_SHIFT)
+// #define FSR_AEXC (FSR_NVA | FSR_OFA | FSR_UFA | FSR_DZA | FSR_NXA)
 // FPU macros
+     
 #define FRS1 READ_FREG(insn.rs1())
 #define FRS2 READ_FREG(insn.rs2())
 #define FRS3 READ_FREG(insn.rs3())
@@ -186,31 +188,31 @@ private:
               rm; })
 
 
-#define set_fp_exceptions ({ if (softfloat_exceptionFlags) { \
-                               dirty_fp_state; \
-                               STATE.fflags |= softfloat_exceptionFlags; \
-                             } \
-                             softfloat_exceptionFlags = 0; })
+// #define set_fp_exceptions ({ if (softfloat_exceptionFlags) { \
+//                                dirty_fp_state; \
+//                                STATE.fflags |= softfloat_exceptionFlags; \
+//                              } \
+//                              softfloat_exceptionFlags = 0; })
 
 
 
 /* Sentinel PC values to serialize simulator pipeline */
-#define PC_SERIALIZE_BEFORE 3
-#define PC_SERIALIZE_AFTER 5
-#define invalid_pc(pc) ((pc) & 1)
+// #define PC_SERIALIZE_BEFORE 3
+// #define PC_SERIALIZE_AFTER 5
+// #define invalid_pc(pc) ((pc) & 1)
 
 /* Convenience wrappers to simplify softfloat code sequences */
 #define f32(x) ((float_t){(uint32_t)x})
 #define f64(x) ((double_t){(uint64_t)x})
 
-#define validate_csr(which, write) ({ \
-  if (!STATE.serialized) return PC_SERIALIZE_BEFORE; \
-  STATE.serialized = false; \
-  unsigned csr_priv = get_field((which), 0x300); \
-  unsigned csr_read_only = get_field((which), 0xC00) == 3; \
-  if (((write) && csr_read_only) || STATE.prv < csr_priv) \
-    throw trap_illegal_instruction(); \
-  (which); })
+// #define validate_csr(which, write) ({ \
+//   if (!STATE.serialized) return PC_SERIALIZE_BEFORE; \
+//   STATE.serialized = false; \
+//   unsigned csr_priv = get_field((which), 0x300); \
+//   unsigned csr_read_only = get_field((which), 0xC00) == 3; \
+//   if (((write) && csr_read_only) || STATE.prv < csr_priv) \
+//     throw trap_illegal_instruction(); \
+//   (which); })
 
 
 #endif

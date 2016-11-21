@@ -2,7 +2,7 @@
 #include "exception.h"
 #include <cstring>
 
-#define DEBUG
+// #define DEBUG
 // #define DEBUG_EXT
 
 mmu_t::mmu_t(const char *path)
@@ -217,6 +217,7 @@ uint64_t mmu_t::read(const uint64_t addr, bool sign, const int len)
 	uint64_t retval = 0;
 	int shift = 0; 
 
+
 	for (int i = 0; i < len; ++i, ++cur_addr)
 	{
 		auto iter = mem.find(cur_addr);
@@ -229,7 +230,9 @@ uint64_t mmu_t::read(const uint64_t addr, bool sign, const int len)
 		}
 		else
 		{
-			printf("ADDR/LEN/ITER:%llx/%d/%d\n", addr, len, i);
+			// printf("ADDR/LEN/ITER:%llx/%d/%d\n", addr, len, i);
+
+			continue;
 			// return 0;
 			throw invalid_address(addr, cur_addr);
 		}
@@ -259,6 +262,14 @@ uint64_t mmu_t::read(const uint64_t addr, bool sign, const int len)
 
 void mmu_t::write(const uint64_t addr, uint64_t REG, const int len)
 {
+
+
+	// if (addr == 0x26e50){
+	// 	printf("0x26e50\n");
+	// 	dump(0x26e50, 16);
+	// 	printf("REG: %llx\n", REG);
+	// 	pause();
+	// }
 
 	#ifdef DEBUG_EXT
 	printf("-----\nWRITE MEM:\n\t[ADDR]:\t%llx\n\t[VAL]:\t%llx\n", addr, REG);

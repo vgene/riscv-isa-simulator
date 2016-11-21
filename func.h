@@ -9,6 +9,7 @@
 #define RISCV_fstat 80
 #define RISCV_close 57
 #define RISCV_gettimeofday 169
+#define RISCV_lseek 62
 
 #include "cpu.h"
 #include "multi.h"
@@ -101,6 +102,7 @@ reg_t rv64_scall(cpu_t* p, insn_t insn, reg_t pc)
         case RISCV_exit:
             exit(0);
         case RISCV_brk:
+        case RISCV_lseek:
             break;
         case RISCV_fstat:
             // if(addr == READ_REG(2) && READ_REG(12) == 0 && READ_REG(13) == 0)
@@ -792,42 +794,42 @@ reg_t rv64_fence(cpu_t* p, insn_t insn, reg_t pc)
 csrrw
 csrrc
 csrrs*/
-reg_t rv64_csrrw(cpu_t* p, insn_t insn, reg_t pc)
-{
-    reg_t npc = sext_xlen(pc + PC_INC);
+// reg_t rv64_csrrw(cpu_t* p, insn_t insn, reg_t pc)
+// {
+//     reg_t npc = sext_xlen(pc + PC_INC);
 
-// int csr = validate_csr(insn.csr(), true);
-// reg_t old = p->get_csr(csr);
-// p->set_csr(csr, RS1);
-// WRITE_RD(sext_xlen(old));
+// // int csr = validate_csr(insn.csr(), true);
+// // reg_t old = p->get_csr(csr);
+// // p->set_csr(csr, RS1);
+// // WRITE_RD(sext_xlen(old));
 
-    return npc;
-}
+//     return npc;
+// }
 
 
-reg_t rv64_csrrc(cpu_t* p, insn_t insn, reg_t pc)
-{
-    reg_t npc = sext_xlen(pc + PC_INC);
+// reg_t rv64_csrrc(cpu_t* p, insn_t insn, reg_t pc)
+// {
+//     reg_t npc = sext_xlen(pc + PC_INC);
 
-// int csr = validate_csr(insn.csr(), true);
-// reg_t old = p->get_csr(csr);
-// p->set_csr(csr, old & ~RS1);
-// WRITE_RD(sext_xlen(old));
+// // int csr = validate_csr(insn.csr(), true);
+// // reg_t old = p->get_csr(csr);
+// // p->set_csr(csr, old & ~RS1);
+// // WRITE_RD(sext_xlen(old));
 
-    return npc;
-}
+//     return npc;
+// }
 
-reg_t rv64_csrrs(cpu_t* p, insn_t insn, reg_t pc)
-{
-    reg_t npc = sext_xlen(pc + PC_INC);
+// reg_t rv64_csrrs(cpu_t* p, insn_t insn, reg_t pc)
+// {
+//     reg_t npc = sext_xlen(pc + PC_INC);
 
-// int csr = validate_csr(insn.csr(), insn.rs1() != 0);
-// reg_t old = p->get_csr(csr);
-// p->set_csr(csr, old | RS1);
-// WRITE_RD(sext_xlen(old));
+// // int csr = validate_csr(insn.csr(), insn.rs1() != 0);
+// // reg_t old = p->get_csr(csr);
+// // p->set_csr(csr, old | RS1);
+// // WRITE_RD(sext_xlen(old));
 
-    return npc;
-}
+//     return npc;
+// }
 
 /*
 fld
@@ -923,6 +925,16 @@ WRITE_FRD(f32(FRS1)/f32(FRS2));
 fmv_s_x
 fcvt_d_l
 fcvt_l_d
+
+fcvt.d.s
+fcvt.d.w
+fcvt.d.wu
+fcvt.s.d
+fcvt.s.l
+fcvt.s.w
+fcvt.w.d
+fcvt.wu.d
+
 */
 reg_t rv64_fmv_s_x(cpu_t* p, insn_t insn, reg_t pc)
 {
@@ -953,319 +965,106 @@ WRITE_RD((reg_t)d_Rounding(RS1, insn.rm()));
     return npc;
 }
 
-
-
-reg_t rv64_sret(cpu_t* p, insn_t insn, reg_t pc)
+reg_t rv64_fcvt_d_s(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
 
-// switch (get_field(STATE.mstatus, MSTATUS_PRV))
-// {
-//   case PRV_S: set_pc(p->get_state()->sepc); break;
-//   case PRV_M: set_pc(p->get_state()->mepc); break;
-//   default: abort();
-// }
+
+    return npc;
+}
+
+reg_t rv64_fcvt_d_w(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+
+    return npc;
+}
+
+reg_t rv64_fcvt_d_wu(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+
+    return npc;
+}
+
+reg_t rv64_fcvt_s_d(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+
+    return npc;
+}
+
+reg_t rv64_fcvt_s_l(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+
+    return npc;
+}
+
+reg_t rv64_fcvt_s_w(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+
+    return npc;
+}
+
+reg_t rv64_fcvt_w_d(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+
+    return npc;
+}
+
+reg_t rv64_fcvt_wu_d(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+
 
     return npc;
 }
 
 
-// reg_t rv64_flw(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
+// fmv.x.d
+// fcvt.s.l
+// fcvt.s.w
+// fcvt.s.d
+// fcvt.d.s
 
-// WRITE_FRD(MMU.read_uint32(RS1 + insn.i_imm()));
+reg_t rv64_fmv_x_d(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
 
-//     return npc;
-// }
 
-// reg_t rv64_fsw(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
 
-// MMU.write_32(RS1 + insn.s_imm(), FRS2);
+    return npc;
+}
 
-//     return npc;
-// }
+reg_t rv64_fmv_d_x(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
 
-// reg_t rv64_fmadd_s(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
 
-// softfloat_roundingMode = RM;
-// WRITE_FRD(f32_mulAdd(f32(FRS1), f32(FRS2), f32(FRS3)).v);
-// set_fp_exceptions;
 
-//     return npc;
-// }
+    return npc;
+}
 
-// reg_t rv64_fmsub_s(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
+/*
+fmadd.d 
+fmv.d
+fmv.d.x
+fneg.d
+fsd
+fsub.d
+fadd.d
+feq.d
+fle.d
+*/
 
-
-//     return npc;
-// }
-
-
-// reg_t rv64_fnmsub_s(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-
-// reg_t rv64_fnmadd_s(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_fadd_s(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_fsub_s(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_fmul_s(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_fdiv_s(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_fsqrt_s(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_fsgnj_s(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_fsgnjx_s(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_fmin_s(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_fmax_s(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
-// reg_t rv64_(cpu_t* p, insn_t insn, reg_t pc)
-// {
-//     reg_t npc = sext_xlen(pc + PC_INC);
-
-
-//     return npc;
-// }
 #endif
