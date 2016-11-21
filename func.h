@@ -888,7 +888,8 @@ reg_t rv64_fmul_d(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
 
-WRITE_FRD(f64(FRS1)*f64(FRS2));
+WRITE_FRD(freg_f64(FRS1)*freg_f64(FRS2));
+
 
     return npc;
 }
@@ -897,7 +898,8 @@ reg_t rv64_fdiv_d(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
 
-WRITE_FRD(f64(FRS1)/f64(FRS2));
+
+WRITE_FRD(freg_f64(FRS1)/freg_f64(FRS2));
 
     return npc;
 }
@@ -906,7 +908,8 @@ reg_t rv64_fmul_s(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
 
-WRITE_FRD(f32(FRS1)*f32(FRS2));
+
+WRITE_FRD(freg_f32(FRS1)*freg_f32(FRS2));
 
     return npc;
 }
@@ -915,7 +918,7 @@ reg_t rv64_fdiv_s(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
 
-WRITE_FRD(f32(FRS1)/f32(FRS2));
+WRITE_FRD(freg_f32(FRS1)/freg_f32(FRS2));
 
     return npc;
 }
@@ -936,6 +939,9 @@ fcvt.w.d
 fcvt.wu.d
 
 */
+
+
+??
 reg_t rv64_fmv_s_x(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
@@ -950,8 +956,7 @@ reg_t rv64_fcvt_d_l(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
 
-
-WRITE_FRD((double)RS1);
+WRITE_FRD(f64_freg(i64_f64(RS1)));
 
     return npc;
 }
@@ -960,7 +965,7 @@ reg_t rv64_fcvt_l_d(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
 
-WRITE_RD((reg_t)d_Rounding(RS1, insn.rm()));
+WRITE_RD(f64_i64(d_Rounding(RS1, insn.rm())));
 
     return npc;
 }
@@ -969,6 +974,7 @@ reg_t rv64_fcvt_d_s(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
 
+WRITE_FRD(f64_freg((double)freg_f32(FRS1)));
 
     return npc;
 }
@@ -976,7 +982,9 @@ reg_t rv64_fcvt_d_s(cpu_t* p, insn_t insn, reg_t pc)
 reg_t rv64_fcvt_d_w(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
+    
 
+    WRITE_FRD(f64_freg(i32_f64(int32_t(RS1))));
 
     return npc;
 }
@@ -985,6 +993,7 @@ reg_t rv64_fcvt_d_wu(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
 
+    WRITE_FRD(f64_freg(i32_f64((uint32_t)(RS1))));
 
     return npc;
 }
@@ -994,6 +1003,8 @@ reg_t rv64_fcvt_s_d(cpu_t* p, insn_t insn, reg_t pc)
     reg_t npc = sext_xlen(pc + PC_INC);
 
 
+    WRITE_FRD(f32_freg((float)freg_f64(FRS1)));
+
     return npc;
 }
 
@@ -1001,6 +1012,7 @@ reg_t rv64_fcvt_s_l(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
 
+    WRITE_FRD(f32_val(RS1));
 
     return npc;
 }
@@ -1009,6 +1021,7 @@ reg_t rv64_fcvt_s_w(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
 
+    WRITE_FRD(f32_val((int32_t)RS1));
 
     return npc;
 }
@@ -1017,6 +1030,7 @@ reg_t rv64_fcvt_w_d(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
 
+    WRITE_RD((int32_t)FRS1);
 
     return npc;
 }
@@ -1025,7 +1039,7 @@ reg_t rv64_fcvt_wu_d(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
 
-
+    WRITE_RD((uint32_t)FRS1);
 
     return npc;
 }
@@ -1041,7 +1055,7 @@ reg_t rv64_fmv_x_d(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
 
-
+    WRITE_RD(FRS1);
 
     return npc;
 }
@@ -1050,11 +1064,66 @@ reg_t rv64_fmv_d_x(cpu_t* p, insn_t insn, reg_t pc)
 {
     reg_t npc = sext_xlen(pc + PC_INC);
 
-
+    WRITE_FRD(RS1);
 
     return npc;
 }
 
+reg_t rv64_fadd_s(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+    WRITE_FRD(f32_freg(freg_f32(FRS1)+freg_f32(FRS2)));
+
+    return npc;
+}
+
+
+reg_t rv64_fadd_d(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+    WRITE_FRD(f64_freg(freg_f64(FRS1)+freg_f64(FRS2)));
+
+    return npc;
+}
+
+reg_t rv64_fsub_s(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+    WRITE_FRD(f32_freg(freg_f32(FRS1)-freg_f32(FRS2)));
+
+    return npc;
+}
+
+
+reg_t rv64_fsub_d(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+    WRITE_FRD(f64_freg(freg_f64(FRS1)-freg_f64(FRS2)));
+
+    return npc;
+}
+
+reg_t rv64_fsgnj_d(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+WRITE_FRD((FRS1 &~ INT64_MIN) | (FRS2 & INT64_MIN));
+
+    return npc;
+}
+
+reg_t rv64_feq_d(cpu_t* p, insn_t insn, reg_t pc)
+{
+    reg_t npc = sext_xlen(pc + PC_INC);
+
+WRITE_FRD((FRS1 == FRS2));
+
+    return npc;
+}
 /*
 fmadd.d 
 fmv.d

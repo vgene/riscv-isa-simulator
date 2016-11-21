@@ -19,6 +19,7 @@
  * NFPR: float register file size
  * SP_INIT: stack pointer location
 ----------*/
+
 const int NXPR = 32;
 const int NFPR = 32;
 const reg_t SP_INIT=0xfffffffffefffb50;
@@ -184,7 +185,7 @@ disasm();
 		int step = 0;
 
 		while (steps==0 || step<steps) {
-
+			step++;
 #ifdef DEBUG
 printf("------\nSTEP: %d\n", step);
 #endif

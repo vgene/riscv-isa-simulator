@@ -155,8 +155,35 @@ private:
 
 
 /* Convenience wrappers to simplify softfloat code sequences */
-#define f32(x) ((float_t){(uint32_t)x})
-#define f64(x) ((double_t){(uint64_t)x})
+#define u32_f32(x) ((float_t){(uint32_t)x})
+#define u32_f64(x) ((double_t){(uint32_t)x})
+#define u64_f32(x) ((float_t){(uint64_t)x})
+#define u64_f64(x) ((double_t){(uint64_t)x})
+#define i32_f32(x) ((float_t){(int32_t)x})
+#define i32_f64(x) ((double_t){(int32_t)x})
+#define i64_f32(x) ((float_t){(int64_t)x})
+#define i64_f64(x) ((double_t){(int64_t)x})
 
+#define f32_u32(x) ((uint32_t){(float_t)x})
+#define f32_u64(x) ((uint64_t){(float_t)x})
+#define f32_i32(x) ((int32_t){(float_t)x})
+#define f32_i64(x) ((int64_t){(float_t)x})
+#define f64_u32(x) ((uint32_t){(double_t)x})
+#define f64_u64(x) ((uint64_t){(double_t)x})
+#define f64_i32(x) ((int32_t){(double_t)x})
+#define f64_i64(x) ((int64_t){(double_t)x})
+
+#define freg_f32(x) ({uint32_t tmp = x; \
+                float* fp = (float*)&tmp; \
+                *fp;})
+#define freg_f64(x) ({uint64_t tmp = x; \
+                double* fp = (double*)&tmp; \
+                *fp;})
+#define f32_freg(x) ({float tmp = x; \
+                uint32_t* p = (uint32_t*)&tmp; \
+                *p;})
+#define f64_freg(x) ({double tmp = x; \
+                uint64_t* p = (uint64_t*)&tmp; \
+                *p;})
 
 #endif

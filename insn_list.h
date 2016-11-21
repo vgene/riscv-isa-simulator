@@ -92,11 +92,21 @@ DEFINE_INSN(fdiv_d)
 DEFINE_INSN(fmul_s)
 DEFINE_INSN(fdiv_s)
 
+DEFINE_INSN(fadd_d)
+DEFINE_INSN(fsub_d)
+DEFINE_INSN(fadd_s)
+DEFINE_INSN(fsub_s)
+
 DEFINE_INSN(fmv_x_d)
 DEFINE_INSN(fmv_d_x)
+
 
 DEFINE_INSN(fcvt_s_l)
 DEFINE_INSN(fcvt_s_w)
 DEFINE_INSN(fcvt_s_d)
 DEFINE_INSN(fcvt_d_s)
+
+DEFINE_INSN(fsgnj_d)
+DEFINE_INSN(feq_d)
+
 // DEFINE_INSN(sret)
