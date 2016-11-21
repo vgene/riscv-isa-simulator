@@ -13,6 +13,13 @@
 #include <vector>
 #include <stdio.h>
 
+
+#ifdef COUNT
+#include <map>
+#include <string>
+#include <algorithm>
+#endif
+
 /*--------
  *CONSTANTS
  * NXPR: int register size
@@ -25,6 +32,12 @@ const int NFPR = 32;
 const reg_t SP_INIT=0xfffffffffefffb50;
 
 
+#ifdef COUNT
+	bool cmp(std::pair<string,int> const & a, std::pair<string,int> const & b) 
+	{ 
+	     return a.second != b.second?  a.second > b.second : a.first > b.first;
+	}
+#endif
 
 class cpu_t;
 //Typedef: instruction function
@@ -76,6 +89,10 @@ private:
 
 	std::vector<insn_desc_t> instructions;
 
+	#ifdef COUNT
+	std::map<string,int> insn_count;
+	#endif
+
 	// TO DEBUG Instructions
 	void check_instructions()
 	{
@@ -117,6 +134,10 @@ private:
 	void register_insn(insn_desc_t desc)
 	{
 		instructions.push_back(desc);
+
+		#ifdef COUNT
+			insn_count.insert(std::pair<string, int>(string(desc.name), 0));
+		#endif
 	}
 
 	void dump_register_file(){
@@ -172,6 +193,11 @@ printf("WANT: %x\n",p->match);
 
 		c_desc = *p;
 		c_func = c_desc.rv64;
+
+		#ifdef COUNT
+			auto iter = insn_count.find(string(c_desc.name));
+			iter->second = iter->second+1;
+		#endif
 
 #ifdef DEBUG
 disasm();
@@ -230,6 +256,46 @@ mmu->dump(DUMP_MEM_ADDR,DUMP_LEN);
 	mmu_t* get_mmu(){
 		return mmu;
 	}
+
+
+
+#ifdef COUNT
+	void print_count(){
+
+
+		// std::map<int,string> smap;
+
+		std::map<string,int>::iterator iter;
+
+		std::vector< std::pair<string,int> > items;
+
+
+		for(iter=insn_count.begin();iter!=insn_count.end();iter++)
+        {
+        	// smap.insert(std::pair<int,string>(iter->second,iter->first));
+        	items.push_back(std::pair<string,int>(iter->first, iter->second));
+
+        	// if (iter->second >0)
+	        //     printf("%s %d\n", iter->first.c_str(), iter->second);
+        }
+
+		// std::map<int,string>::iterator iter2;
+		// for(iter2=smap.end();iter2!=smap.begin();iter2--)
+  //       {
+  //           // printf("%d %s\n", iter2->first, iter2->second.c_str());
+  //       }
+
+
+		std::sort(items.begin(), items.end(), cmp);
+		std::vector< std::pair<string,int> >::iterator iter3;
+		for(iter3=items.begin();iter3!=items.end();iter3++)
+        {
+
+            printf("%s %d\n", iter3->first.c_str(), iter3->second);
+        }
+	}
+#endif
+
 };
 
 #endif
