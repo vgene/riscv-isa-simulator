@@ -1,2 +1,2 @@
-all : test.cpp mmu.cpp
-	g++ test.cpp mmu.cpp -o test -w
+all : riscv-simulator.cpp mmu.cpp
+	g++ riscv-simulator.cpp mmu.cpp -o riscv-simulator -w

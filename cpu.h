@@ -13,28 +13,11 @@
 #include <vector>
 #include <stdio.h>
 
-/*-------------
- * DEBUG MACROS
- * DEBUG: 
- * 	Enable Check Instructions
- * 	Enable Elf Dump
- * DEBUG_DUMP_REGISTER:
- *  Enable Register Dump On EACH Step
- * DEBUG_DUMP_MEMORY:
- * 	With DUMP_MEM_ADDR and DUMP_LEN
- * 	Enable Memory Dump On EACH STEP
---------------- */
-
-// #define DEBUG
-// #define DEBUG_DUMP_REGISTER
-
-// #define DEBUG_DUMP_MEMORY
-// #define DUMP_MEM_ADDR 0x00010e60
-// #define DUMP_LEN 100
-
 /*--------
  *CONSTANTS
- *
+ * NXPR: int register size
+ * NFPR: float register file size
+ * SP_INIT: stack pointer location
 ----------*/
 const int NXPR = 32;
 const int NFPR = 32;
@@ -198,7 +181,9 @@ disasm();
 	void step(int steps)
 	{
 
-		for (int step=0;step<steps; step++){
+		int step = 0;
+
+		while (steps==0 || step<steps) {
 
 #ifdef DEBUG
 printf("------\nSTEP: %d\n", step);

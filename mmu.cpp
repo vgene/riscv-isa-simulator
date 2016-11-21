@@ -2,7 +2,7 @@
 #include "exception.h"
 #include <cstring>
 
-// #define DEBUG
+// #define DEBUG_MMU
 // #define DEBUG_EXT
 
 mmu_t::mmu_t(const char *path)
@@ -400,7 +400,7 @@ insn_bits_t mmu_t::load_insn(reg_t PC)
 	const int len = sizeof(uint32_t);
 	int shift = 0;
 
-	#ifdef DEBUG
+	#ifdef DEBUG_MMU
 	printf("LOADING INSN:\n\t[PC]:\t%llx\n", PC);
 	#endif
 
@@ -421,7 +421,7 @@ insn_bits_t mmu_t::load_insn(reg_t PC)
 		}
 
 	}
-	#ifdef DEBUG
+	#ifdef DEBUG_MMU
 	printf("\t[VAL]:\t%llx\n", retval);
 	#endif
 	return retval;
