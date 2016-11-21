@@ -8,6 +8,7 @@ DEBUG += -DCOUNT
 
 
 ### !!! UNCOMMENT NEXT LINE IF LINUX AND LEGACY GCC SETTING
+### !!! Comment it on Mac OS
 #STD := -std=c++11
 
 ### Optimization Level

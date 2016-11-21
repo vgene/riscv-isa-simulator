@@ -2,7 +2,7 @@
 
 STEP0:
   Modify Makefile to enable debugging macros
-
+  
 STEP1:
   make
 
