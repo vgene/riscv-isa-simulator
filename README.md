@@ -1,8 +1,8 @@
 # riscv-isa-simulator
 
 STEP0:
-  Modify riscv-simulator.cpp to enable debugging macros
-  
+  Modify Makefile to enable debugging macros
+
 STEP1:
   make
 
