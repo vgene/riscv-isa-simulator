@@ -196,6 +196,10 @@ printf("------\nSTEP: %d\n", step);
 			c_insn = *insn;
 
 			decode_insn();
+
+			if (c_desc.name == "illegal")
+				printf("%llx\n", state.pc);
+
 			state.pc = execute_insn();
 
 

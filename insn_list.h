@@ -85,8 +85,7 @@ DEFINE_INSN(fsd)
 DEFINE_INSN(fsw)
 
 DEFINE_INSN(fmv_s_x)
-DEFINE_INSN(fcvt_l_d)
-DEFINE_INSN(fcvt_d_l)
+
 DEFINE_INSN(fmul_d)
 DEFINE_INSN(fdiv_d)
 DEFINE_INSN(fmul_s)
@@ -100,13 +99,23 @@ DEFINE_INSN(fsub_s)
 DEFINE_INSN(fmv_x_d)
 DEFINE_INSN(fmv_d_x)
 
+DEFINE_INSN(fcvt_l_d)
 
 DEFINE_INSN(fcvt_s_l)
 DEFINE_INSN(fcvt_s_w)
 DEFINE_INSN(fcvt_s_d)
 DEFINE_INSN(fcvt_d_s)
+DEFINE_INSN(fcvt_d_w)
+DEFINE_INSN(fcvt_d_l)
+DEFINE_INSN(fcvt_w_d)
+DEFINE_INSN(fcvt_wu_d)
+
 
 DEFINE_INSN(fsgnj_d)
 DEFINE_INSN(feq_d)
+DEFINE_INSN(fle_d)
+DEFINE_INSN(flt_d)
+DEFINE_INSN(fmadd_d)
+
 
 // DEFINE_INSN(sret)
