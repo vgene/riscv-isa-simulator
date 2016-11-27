@@ -90,6 +90,7 @@ private:
 	std::vector<insn_desc_t> instructions;
 
 	#ifdef COUNT
+	long total = 0;
 	std::map<string,int> insn_count;
 	#endif
 
@@ -109,7 +110,6 @@ private:
 
 		printf("%s\n\n\n","END CHECK INSTRUCTIONS");
 	}
-
 
 	//register all instructions into vector instructions
 	void register_instructions()
@@ -146,11 +146,9 @@ private:
 		}
 	}
 
-
 public:
-
-	cpu_t(const char * path){
-		mmu = new mmu_t(path);
+	cpu_t(mmu_t* mmu_){
+		mmu = mmu_;
 
 #ifdef DEBUG
 mmu->Debug_elf();
@@ -205,18 +203,15 @@ disasm();
 
 	}
 
+
 	void step(int steps)
 	{
-
 		int step = 0;
-
 		while (steps==0 || step<steps) {
 			step++;
 #ifdef DEBUG
 printf("------\nSTEP: %d\n", step);
 #endif
-
-
 
 			insn_t* insn = new insn_t(mmu->load_insn(state.pc));
 			c_insn = *insn;
@@ -227,7 +222,6 @@ printf("------\nSTEP: %d\n", step);
 				printf("%llx\n", state.pc);
 
 			state.pc = execute_insn();
-
 
 #ifdef DEBUG_DUMP_REGISTER
 dump_register_file();
@@ -262,36 +256,23 @@ mmu->dump(DUMP_MEM_ADDR,DUMP_LEN);
 #ifdef COUNT
 	void print_count(){
 
-
-		// std::map<int,string> smap;
-
 		std::map<string,int>::iterator iter;
-
 		std::vector< std::pair<string,int> > items;
-
 
 		for(iter=insn_count.begin();iter!=insn_count.end();iter++)
         {
-        	// smap.insert(std::pair<int,string>(iter->second,iter->first));
         	items.push_back(std::pair<string,int>(iter->first, iter->second));
+        	total+=iter->second;
 
-        	// if (iter->second >0)
-	        //     printf("%s %d\n", iter->first.c_str(), iter->second);
         }
-
-		// std::map<int,string>::iterator iter2;
-		// for(iter2=smap.end();iter2!=smap.begin();iter2--)
-  //       {
-  //           // printf("%d %s\n", iter2->first, iter2->second.c_str());
-  //       }
-
+        printf("------------------\nTotal Instruction Counts:%ld\n", total);
 
 		std::sort(items.begin(), items.end(), cmp);
 		std::vector< std::pair<string,int> >::iterator iter3;
 		for(iter3=items.begin();iter3!=items.end();iter3++)
         {
 
-            printf("%s %d\n", iter3->first.c_str(), iter3->second);
+            printf("%s\t%d\n", iter3->first.c_str(), iter3->second);
         }
 	}
 #endif

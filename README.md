@@ -13,4 +13,4 @@ STEP3:
   input ELF path
   
 STEP4: 
-  wait for result!
+  wait for result(including cache statistics)
