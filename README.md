@@ -6,11 +6,12 @@ STEP0:
 STEP1:
   make
 
-STEP2:
+STEP2a:
   ./riscv-simulator
-  
-STEP3:
-  input ELF path
-  
-STEP4: 
+  and then input ELF path
+
+STEP2a:
+  ./riscv-simulator PATH_TO_ELF
+
+STEP3: 
   wait for result(including cache statistics)
