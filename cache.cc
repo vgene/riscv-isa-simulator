@@ -24,11 +24,8 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
     // Bypass?
     if (!BypassDecision()) 
     {
-        PartitionAlgorithm();       
+        // PartitionAlgorithm();       
 
-
-        
-        //可以用宏改造一下
         uint64_t addr_tag = addr >> TAG_OFFSET;
         int block_offset = (int)(addr & BLOCK_MASK);    //假设都是block_size 这样的参数都是4，8 这样2的幂
         int set_index = (int)((addr >> SET_OFFSET) & SET_MASK); //在哪一个组
@@ -78,7 +75,7 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
             }
 
             time += latency_.bus_latency + latency_.hit_latency;
-            stats_.access_time += latency_.hit_latency;
+            stats_.access_time = latency_.bus_latency + latency_.hit_latency;
         }
     }
   // Prefetch?
@@ -111,7 +108,7 @@ void Cache::PartitionAlgorithm()
 
 int Cache::ReplaceDecision(int set_index, uint64_t addr_tag, int& set_way) 
 {
-    auto set = mycache_[set_index].set_st;    
+    auto& set = mycache_[set_index].set_st;    
     for (int i = 0; i < config_.associativity; ++i)
     {
         if(set[i].valid == VALID && set[i].tag == addr_tag)
@@ -154,7 +151,7 @@ void Cache::ReplaceAlgorithm(int set_index, uint64_t addr, int bytes, int read_o
                         set[i].tag = (uint64_t)(addr >> TAG_OFFSET);
 
 
-        
+                        time += lower_time;
                     }
                     else    
                     {
@@ -171,21 +168,22 @@ void Cache::ReplaceAlgorithm(int set_index, uint64_t addr, int bytes, int read_o
                                 set[i].dirty = 1;
                             }
 
-
+                            time += latency_.hit_latency;
                         }
-                        else    
-                        {
-                            // write non allocate
-                        }
+                        // else    
+                        // {
+                        //     // write non allocate
+                        // }
                     }
 
                     time += latency_.bus_latency;
-                    stats_.access_time += latency_.hit_latency;
+                    stats_.access_time = latency_.bus_latency + latency_.hit_latency;
                     
                     
                     return;
                 }
             }
+
 
 
             //      cache is full, find LRU
@@ -197,21 +195,7 @@ void Cache::ReplaceAlgorithm(int set_index, uint64_t addr, int bytes, int read_o
             set[cnt].counter = stats_.access_counter;
             stats_.replace_num ++;
 
-
-            if(set[cnt].dirty == 1 && config_.write_through == WRITE_BACK)
-            {
-                uint64_t tmp_addr = set[cnt].tag;
-                tmp_addr = (tmp_addr << SET_BITS) | set_index;
-                tmp_addr = (tmp_addr << BLOCK_BITS) ;//block 字节对齐
-
-                int lower_hit = 0, lower_time = 0;
-                lower_->HandleRequest(tmp_addr, config_.block_size, 
-                                      WRITE_OPERATION, set[cnt].block, 
-                                      lower_hit, lower_time);
-
-                
-                
-            }
+            int lower_hit = 0, lower_time = 0;
 
             if(read_or_write == WRITE_OPERATION)
             {
@@ -227,21 +211,45 @@ void Cache::ReplaceAlgorithm(int set_index, uint64_t addr, int bytes, int read_o
                     // write through
 
                 }
+
+                time += latency_.hit_latency;
+
             }
             else    // read
             {
                 set[cnt].dirty = 0;
-                int lower_hit = 0, lower_time = 0;
+               
                 
                 stats_.access_lower_num ++;
                 lower_->HandleRequest(addr, config_.block_size, READ_OPERATION
                                     , set[cnt].block, lower_hit, lower_time);
 
                 set[cnt].tag = (uint64_t)(addr >> TAG_OFFSET);
+
+                time += lower_time;
             }
 
+
+            lower_hit = 0;
+            lower_time = 0;
+            //  write back policy
+            if(set[cnt].dirty == 1 && config_.write_through == WRITE_BACK)
+            {
+                uint64_t tmp_addr = set[cnt].tag;
+                tmp_addr = (tmp_addr << SET_BITS) | set_index;
+                tmp_addr = (tmp_addr << BLOCK_BITS) ;//block 字节对齐
+
+                
+                lower_->HandleRequest(tmp_addr, config_.block_size, 
+                                      WRITE_OPERATION, set[cnt].block, 
+                                      lower_hit, lower_time);
+             
+                stats_.access_time += lower_time;
+            }
+
+
             time += latency_.bus_latency;
-            stats_.access_time += latency_.hit_latency;
+            stats_.access_time = latency_.bus_latency + latency_.hit_latency;
 
             return;
             break;

@@ -66,7 +66,7 @@ void mmu_t::set_cache(){
     l3_lentency.bus_latency = 0;
     l3_lentency.hit_latency = 5;
 
-    int l1_size =  32 * KB;               //输入以byte为单位
+    int l1_size = 32 * KB;               //输入以byte为单位
     int l1_block = 64;
     int l1_associativity = 8;
 

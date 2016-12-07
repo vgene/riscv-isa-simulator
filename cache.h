@@ -10,7 +10,7 @@
 
 
 inline int log2(int value){
-  if( value == 1)
+  if(value == 1)
     return 0;
   else
     return 1 + log2(value>>1);
@@ -74,7 +74,7 @@ class Cache: public Storage {
     config_.block_size = block_;
     config_.associativity = ass_;
     config_.set_num = size_ / (block_ * ass_);
-    config_.tag_len = 64-log2(block_)-log2(config_.set_num);   // May improve log2
+    config_.tag_len = 64-log2(block_)-log2(config_.set_num);   //需保证block_, set_num 是2的幂
     
     // printf("Size:%x\n", config_.size);
     // printf("block_size:%x\n", config_.block_size);
@@ -83,21 +83,21 @@ class Cache: public Storage {
     // printf("tag_len:%x\n", config_.tag_len);
 
 
+
+    /****需要确定基本策略，以下应该不需要*****/
     if(policy == WRITE_BACK_ALLOCATE)
     {
         config_.write_through = WRITE_BACK;
         config_.write_allocate = WRITE_ALLOCATE;
     }
+    /***********************/
+
 
 
 
     strategy = LRU; //replacement
 
-    /*********/
 
-    //初始化debug
-
-    /*********/
    
     for(int i = 0;i < config_.set_num;i++)
     { 
