@@ -2,6 +2,9 @@
 #define RISCV_MMU_H
 
 #include "structs.h"
+#include "storage.h"
+#include "cache.h"
+#include "memory.h"
 
 #include <cstdint>
 #include <cstdlib>
@@ -14,7 +17,7 @@ typedef uint32_t Elf64_Word;
 typedef uint64_t Elf64_Off;
 typedef uint64_t Elf64_Xword;
 
-const int EI_NIDENT	= 16;
+const int EI_NIDENT	= 16; 
 
 
 struct Elf64_Ehdr 	/* ELf header : 64 byte */
@@ -78,6 +81,12 @@ class mmu_t{
 private:
   FILE *file;
 
+  Cache* l1_cache;
+  Cache* l2_cache;
+  Cache* l3_cache;
+  Memory* memory;
+
+
   std::map<uint64_t, uint8_t> mem;
   std::map<Elf64_Addr, Elf64_Addr> forbid;  // [a,b] is forbidden block
   
@@ -112,14 +121,14 @@ private:
 
 
 
+
 public:
   mmu_t(const char * path); // elf file's path
   ~mmu_t();
-
+  void set_cache();
+  void print_cache_stats();
 
   Elf64_Addr start_addr();
-  
-
   insn_bits_t load_insn(reg_t PC);
 
   uint64_t read(const uint64_t addr, bool sign, const int len);

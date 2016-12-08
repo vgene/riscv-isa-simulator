@@ -1,5 +1,6 @@
 #include "mmu.h"
 #include "exception.h"
+#include "storage.h"
 #include <cstring>
 
 // #define DEBUG_MMU
@@ -7,6 +8,7 @@
 
 mmu_t::mmu_t(const char *path)
 {
+	mmu_t::set_cache();
 	this->file = fopen(path, "rb");
 	if(this->file == NULL)
 	{
@@ -39,6 +41,107 @@ mmu_t::~mmu_t()
 	delete [] sh_str_tbl;
 	delete [] str_tbl;
 	delete [] symbol_table;	
+}
+
+void mmu_t::set_cache(){
+
+   /****Initialization Aruguments****/    
+    StorageStats stats;
+    
+
+    StorageLatency mem_latency;
+    mem_latency.bus_latency = 0;
+    mem_latency.hit_latency = 50;
+
+
+    StorageLatency l1_lentency;
+    l1_lentency.bus_latency = 0;
+    l1_lentency.hit_latency = 2;
+
+    StorageLatency l2_lentency;
+    l2_lentency.bus_latency = 0;
+    l2_lentency.hit_latency = 2;
+
+    StorageLatency l3_lentency;
+    l3_lentency.bus_latency = 0;
+    l3_lentency.hit_latency = 5;
+
+    int l1_size = 32 * KB;               //输入以byte为单位
+    int l1_block = 64;
+    int l1_associativity = 8;
+
+    int l2_size =  256 * KB;               //输入以byte为单位
+    int l2_block = 64;
+    int l2_associativity = 8;
+
+    int l3_size =  8 * MB;               //输入以byte为单位
+    int l3_block = 64;
+    int l3_associativity = 8;
+    /*************************/
+
+
+    /*****Simulator's code****/
+    memory = new Memory();
+    memory->SetStats(stats);
+    memory->SetLatency(mem_latency);
+
+	l1_cache = new Cache(l1_size, l1_block, l1_associativity, WRITE_BACK_ALLOCATE, LRU);
+	l2_cache = new Cache(l2_size, l2_block, l2_associativity, WRITE_BACK_ALLOCATE, LRU);
+	l3_cache = new Cache(l3_size, l3_block, l3_associativity, WRITE_BACK_ALLOCATE, LRU);
+
+
+
+    l1_cache->SetLower(l2_cache);
+    l1_cache->SetStats(stats);
+    l1_cache->SetLatency(l1_lentency);
+
+    l2_cache->SetLower(l3_cache);
+    l2_cache->SetStats(stats);
+    l2_cache->SetLatency(l2_lentency);
+
+
+
+    l3_cache->SetLower(memory);
+    l3_cache->SetStats(stats);
+    l3_cache->SetLatency(l3_lentency);
+}
+
+void mmu_t::print_cache_stats(){
+    StorageStats res_lv1_stats;
+    StorageStats res_lv2_stats;
+    StorageStats res_lv3_stats;
+    StorageStats res_mem_stats;
+    l1_cache->GetStats(res_lv1_stats);
+    l2_cache->GetStats(res_lv2_stats);
+    l3_cache->GetStats(res_lv3_stats);
+    memory->GetStats(res_mem_stats);
+    printf("\nL1 access_counter = %d\nL1 miss_num= %d\
+            \nL1 access time = %d\nL1 miss_rate:  %f\
+            \nL1 replace_num = %d\nL1 access_lower_num = %d\n"
+            , res_lv1_stats.access_counter, res_lv1_stats.miss_num
+            , res_lv1_stats.access_time
+            , (double(res_lv1_stats.miss_num)/double(res_lv1_stats.access_counter))
+            , res_lv1_stats.replace_num, res_lv1_stats.access_lower_num);
+    printf("\nL2 access_counter = %d\nL2 miss_num= %d\
+            \nL2 access time = %d\nL2 miss_rate:  %f\
+            \nL2 replace_num = %d\nL2 access_lower_num = %d\n"
+            , res_lv2_stats.access_counter, res_lv2_stats.miss_num
+            , res_lv2_stats.access_time
+            , (double(res_lv2_stats.miss_num)/double(res_lv2_stats.access_counter))
+            , res_lv2_stats.replace_num, res_lv2_stats.access_lower_num);
+
+    printf("\nL3 access_counter = %d\nL3 miss_num= %d\
+            \nL3 access time = %d\nL3 miss_rate:  %f\
+            \nL3 replace_num = %d\nL3 access_lower_num = %d\n"
+            , res_lv3_stats.access_counter, res_lv3_stats.miss_num
+            , res_lv3_stats.access_time
+            , (double(res_lv3_stats.miss_num)/double(res_lv3_stats.access_counter))
+            , res_lv3_stats.replace_num, res_lv3_stats.access_lower_num);
+
+    printf("\nMem access_counter = %d\
+            \nMem access time = %d\n"
+            , res_mem_stats.access_counter
+            , res_mem_stats.access_time);
 }
 
 Elf64_Addr mmu_t::start_addr()
@@ -176,6 +279,17 @@ void mmu_t::load_data(FILE *file, int data_index)
 	for (int i = 0; i < size; ++i)
 	{
 		fread(&cur_data, sizeof(uint8_t), 1, file);
+
+
+		// char* content = new char[1];
+		// content[0] = cur_data;
+		// int hit;
+		// int time;
+		// l1_cache->HandleRequest(cur_addr, 1, 0,
+		// 				content, hit, time);
+		// delete []content;
+
+
 		mem.insert(std::pair<Elf64_Addr, uint8_t>(cur_addr, cur_data));
 		cur_addr++;
 	}
@@ -194,6 +308,15 @@ void mmu_t::load_prog(FILE *file, int phnum)
 		for (int j = 0; j < prog_hdrs[i].p_filesz; j++)
 		{
 			fread(&cur_inst, sizeof(char), 1, file);
+
+			// char* content = new char[1];
+			// content[0] = cur_inst;
+			// int hit;
+			// int time;
+			// l1_cache->HandleRequest(cur_addr, 1, 0,
+			// 				content, hit, time);
+			// delete []content;
+
 			mem.insert(std::pair<uint64_t, uint8_t>(cur_addr, cur_inst));
 			cur_addr ++;
 		}
@@ -220,6 +343,14 @@ uint64_t mmu_t::read(const uint64_t addr, bool sign, const int len)
 
 	for (int i = 0; i < len; ++i, ++cur_addr)
 	{
+
+		char* content = new char[1];
+		int hit;
+		int time;
+		l1_cache->HandleRequest(cur_addr, 1, 1,
+						content, hit, time);
+		delete []content;
+
 		auto iter = mem.find(cur_addr);
 
 
@@ -262,13 +393,16 @@ uint64_t mmu_t::read(const uint64_t addr, bool sign, const int len)
 
 void mmu_t::write(const uint64_t addr, uint64_t REG, const int len)
 {
+	// uint64_t cur_addr = addr;
+	// uint64_t val = REG;
 
-
-	// if (addr == 0x26e50){
-	// 	printf("0x26e50\n");
-	// 	dump(0x26e50, 16);
-	// 	printf("REG: %llx\n", REG);
-	// 	pause();
+	// char* content = new char[8];
+	// int hit;
+	// int time;
+	// for (int i=0; i<len; i++){
+	// 	content[0] = val & 0xFF;
+	// 	val >>= 8;
+	// 	l1_cache->HandleRequest(addr, len, 0, content, hit, time);
 	// }
 
 	#ifdef DEBUG_EXT
@@ -285,6 +419,8 @@ void mmu_t::write(const uint64_t addr, uint64_t REG, const int len)
 
 	for (int i = 0; i < len; ++i, ++cur_addr)
 	{
+
+
 		auto iter = mem.find(cur_addr);
 		if(iter != mem.end() || iter->first == cur_addr)
 		{
@@ -293,6 +429,15 @@ void mmu_t::write(const uint64_t addr, uint64_t REG, const int len)
 		}
 		else
 		{
+
+		char* content = new char[1];
+		content[0] = val & 0xFF;
+		int hit;
+		int time;
+		l1_cache->HandleRequest(cur_addr, 1, 0,
+						content, hit, time);
+		delete []content;
+
 			mem.insert(std::pair<uint64_t, uint8_t>(cur_addr, val & 0xFF));
 			val >>= 8;
 		}
@@ -306,6 +451,10 @@ void mmu_t::write(const uint64_t addr, uint64_t REG, const int len)
 
 void mmu_t::write_bare(const uint64_t addr, char* val, const int len)
 {
+    // @TODO
+	//WRITE VALUE INTO CACHE!!
+
+
 
 	uint64_t cur_addr = addr;
 
@@ -314,6 +463,15 @@ void mmu_t::write_bare(const uint64_t addr, char* val, const int len)
 
 	for (int i = 0; i < len; ++i, ++cur_addr)
 		{
+
+			char* content = new char[1];
+			content[0] = val[i];
+			int hit;
+			int time;
+			l1_cache->HandleRequest(cur_addr, 1, 0,
+						content, hit, time);
+			delete[] content;
+
 			auto iter = mem.find(cur_addr);
 			if(iter != mem.end() || iter->first == cur_addr)
 			{
@@ -404,6 +562,7 @@ insn_bits_t mmu_t::load_insn(reg_t PC)
 	printf("LOADING INSN:\n\t[PC]:\t%llx\n", PC);
 	#endif
 
+	// retval = (insn_bits_t)read_uint32(PC);
 	for(int i = 0;i < len; ++i, ++cur_addr)
 	{
 

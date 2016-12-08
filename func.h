@@ -100,6 +100,10 @@ reg_t rv64_scall(cpu_t* p, insn_t insn, reg_t pc)
             WRITE_REG(10,(reg_t)time((time_t*)(addr)));
             break;
         case RISCV_exit:
+            #ifdef PRINT_CACHE
+            MMU.print_cache_stats();
+            #endif
+
             #ifdef COUNT
             p->print_count();
             #endif

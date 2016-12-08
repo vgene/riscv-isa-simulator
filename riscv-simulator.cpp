@@ -1,4 +1,4 @@
-/*-------------
+ /*-------------
  * DEBUG MACROS
  * DEBUG: 
  * 	Enable Check Instructions
@@ -22,8 +22,8 @@
 
 #include "cpu.h"
 #include "func.h"
-
-
+#include "mmu.h"
+#include "def.h"
 int main(int argc, char *argv[])
 {
 	char* path;
@@ -39,7 +39,17 @@ int main(int argc, char *argv[])
 
 	printf("START WITH PATH: %s\n\n", path);
 
-	cpu_t* cpu=new cpu_t(path);
+
+	mmu_t* mmu=new mmu_t(path);
+
+
+	int size = 32 * KB;               //输入以byte为单位
+    int block = 8;
+    int associativity = 4;
+    
+	// mmu->set_cache();
+
+	cpu_t* cpu=new cpu_t(mmu);
 
 	cpu->step(0);
 

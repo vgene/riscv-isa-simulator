@@ -154,7 +154,7 @@ private:
               rm; })
 
 
-/* Convenience wrappers to simplify softfloat code sequences */
+/* Convenience wrappers to simplify float code sequences */
 #define u32_f32(x) ((float_t){(uint32_t)x})
 #define u32_f64(x) ((double_t){(uint32_t)x})
 #define u64_f32(x) ((float_t){(uint64_t)x})
