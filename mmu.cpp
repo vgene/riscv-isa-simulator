@@ -47,7 +47,7 @@ void mmu_t::set_cache(){
 
    /****Initialization Aruguments****/    
     StorageStats stats;
-    stats.access_time = 0;
+    
 
     StorageLatency mem_latency;
     mem_latency.bus_latency = 0;

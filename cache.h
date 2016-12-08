@@ -54,8 +54,10 @@ class Set
 {
 public:
   std::vector<Line> set_st;
+  uint64_t last_hit_tag;
   Set(int line_num,int block_ssize)
   {   //构造函数
+    last_hit_tag = 0;
     for(int k = 0;k < line_num; k++)
     {
       Line* tmp = new Line(block_ssize);
@@ -96,6 +98,7 @@ class Cache: public Storage {
 
 
     strategy = LRU; //replacement
+    prefetch_blocks = 1; 
 
 
    
@@ -141,16 +144,17 @@ class Cache: public Storage {
   void visit(uint64_t addr,int len, int read_or_write);
  private:
   
-  int BypassDecision();  
+  int BypassDecision(uint64_t addr);  
+  void BypassAlgorithm(uint64_t addr, int bytes, int read, 
+                      char* content, int& hit, int& time);
   
-  void PartitionAlgorithm();
-  
-  int ReplaceDecision(int set_index, uint64_t addr_tag, int& line_offset);    //
+  int AccessHit(int set_index, uint64_t addr_tag, int& line_offset);
+  // int ReplaceDecision(int set_index, uint64_t addr_tag, int& line_offset);    //
   void ReplaceAlgorithm(int set_index,uint64_t addr, int bytes, int read_or_write,
                           char *content, int &hit, int &time);
   
-  int PrefetchDecision();
-  void PrefetchAlgorithm();
+  inline int PrefetchDecision();
+  void PrefetchAlgorithm(uint64_t addr, int &hit,int &time);
 
 
   std::vector<Set> mycache_; 
@@ -164,6 +168,7 @@ class Cache: public Storage {
   Storage *lower_;
 
   replace_t strategy;
+  int prefetch_blocks;
 
 
   DISALLOW_COPY_AND_ASSIGN(Cache);

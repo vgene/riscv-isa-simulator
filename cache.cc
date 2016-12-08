@@ -20,94 +20,95 @@ void Cache::HandleRequest(uint64_t addr, int bytes, int read,
     time = 0;
 
     stats_.access_counter ++;
+    stats_.access_time += latency_.bus_latency;
+    time += latency_.bus_latency;
 
-    // Bypass?
-    if (!BypassDecision()) 
+    uint64_t addr_tag = addr >> TAG_OFFSET;
+    int block_offset = (int)(addr & BLOCK_MASK);    //假设都是block_size 这样的参数都是4，8 这样2的幂
+    int set_index = (int)((addr >> SET_OFFSET) & SET_MASK); //在哪一个组
+    int set_way = 0;    //在哪一个路
+
+
+    #ifdef DEBUG
+    printf("BLOCK_MASK %x\n", BLOCK_MASK);
+    printf("SET_OFFSET %x\n", SET_OFFSET);
+    printf("SET_MASK %x\n", SET_MASK);
+    printf("ADDR %x\n", addr);
+    printf("Tag, BO, SI: %x %x %x\n", addr_tag, block_offset, set_index);
+    #endif
+
+
+    if(!AccessHit(set_index, addr_tag, set_way))
     {
-        // PartitionAlgorithm();       
-
-        uint64_t addr_tag = addr >> TAG_OFFSET;
-        int block_offset = (int)(addr & BLOCK_MASK);    //假设都是block_size 这样的参数都是4，8 这样2的幂
-        int set_index = (int)((addr >> SET_OFFSET) & SET_MASK); //在哪一个组
-        int set_way = 0;    //在哪一个路
-
-        #ifdef DEBUG
-        printf("BLOCK_MASK %x\n", BLOCK_MASK);
-        printf("SET_OFFSET %x\n", SET_OFFSET);
-        printf("SET_MASK %x\n", SET_MASK);
-        printf("ADDR %x\n", addr);
-        printf("Tag, BO, SI: %x %x %x\n", addr_tag, block_offset, set_index);
-        #endif
+        stats_.miss_num++;
 
 
-
-        if (ReplaceDecision(set_index, addr_tag, set_way)) 
+        if(BypassDecision(addr))
         {
-            stats_.miss_num++;
-            // printf("ADDR: %x\n", addr);
-
-            ReplaceAlgorithm(set_index, addr, bytes, read,
-                             content,   hit,  time);
-
+            BypassAlgorithm(addr, bytes, read, 
+                            content, hit, time);
         }
         else
         {
-            hit = 1;
+            ReplaceAlgorithm(set_index, addr, bytes, read,
+                             content,   hit,  time);
+        }
+        if(PrefetchDecision())
+        {
+            PrefetchAlgorithm(addr, hit, time);
+        }
+    }
+    else    // hit
+    {  
+        hit = 1;
             
-            if(read == READ_OPERATION)
+        if(read == READ_OPERATION)
+        {
+            memcpy(content, mycache_[set_index].set_st[set_way].block, bytes);
+        }
+        else
+        {
+            if(config_.write_through == WRITE_BACK)
             {
-                memcpy(content, mycache_[set_index].set_st[set_way].block, bytes);
+                auto& line = mycache_[set_index].set_st[set_way];
+            
+                line.dirty = 1;
+                line.tag = (addr >> TAG_OFFSET);
+                memcpy(line.block, content, config_.block_size);
             }
             else
             {
-                if(config_.write_through == WRITE_BACK)
-                {
-                    auto& line = mycache_[set_index].set_st[set_way];
-                
-                    line.dirty = 1;
-                    line.tag = (addr >> TAG_OFFSET);
-                    memcpy(line.block, content, config_.block_size);
-                }
-                else
-                {
-                    //Write through
-                }
+                //Write through
             }
-
-            time += latency_.bus_latency + latency_.hit_latency;
-            stats_.access_time = latency_.bus_latency + latency_.hit_latency;
         }
+
+        time += latency_.hit_latency;
+        stats_.access_time += latency_.hit_latency;
     }
-  // Prefetch?
+    
+
+  
     // if (PrefetchDecision()) 
     // {
     //     PrefetchAlgorithm();
     // } 
-    // else 
-    // {
-    //     // Fetch from lower layer
-    //     int lower_hit=0 , lower_time=0;
+    // // else 
+    // // {
+    // //     // Fetch from lower layer
+    // //     int lower_hit=0 , lower_time=0;
 
-    //     lower_->HandleRequest(addr, bytes, read, content,
-    //                           lower_hit, lower_time);
-    //     hit = 0;
-    //     time += latency_.bus_latency + lower_time;
-    //     stats_.access_time += latency_.bus_latency;
-    // }
+    // //     lower_->HandleRequest(addr, bytes, read, content,
+    // //                           lower_hit, lower_time);
+    // //     hit = 0;
+    // //     time += latency_.bus_latency + lower_time;
+    // //     stats_.access_time += latency_.bus_latency;
+    // // }
 }
 
-int Cache::BypassDecision()
+int Cache::AccessHit(int set_index, uint64_t addr_tag, int& set_way)
 {
-    return FALSE;
-}
+    stats_.access_time += latency_.hit_latency;
 
-void Cache::PartitionAlgorithm() 
-{
-
-}
-
-int Cache::ReplaceDecision(int set_index, uint64_t addr_tag, int& set_way) 
-{
     auto& set = mycache_[set_index].set_st;    
     for (int i = 0; i < config_.associativity; ++i)
     {
@@ -119,7 +120,38 @@ int Cache::ReplaceDecision(int set_index, uint64_t addr_tag, int& set_way)
         }
     }
     return TRUE;    
+}
+
+int Cache::BypassDecision(uint64_t addr)
+{
+    uint64_t addr_tag = addr >> TAG_OFFSET;
+    int block_offset = (int)(addr & BLOCK_MASK); 
+    int set_index = (int)((addr >> SET_OFFSET) & SET_MASK); 
+
     
+    const auto set_tag = mycache_[set_index].last_hit_tag;
+    if(set_tag == addr_tag)     // conflict miss
+    {
+        return FALSE;
+    }
+    else    // capacity miss
+    {
+        return TRUE;
+    }
+
+}
+
+void Cache::BypassAlgorithm(uint64_t addr, int bytes, int read, 
+                            char* content, int& hit, int& time)
+{
+    int lower_hit  = 0;
+    int lower_time = 0;     // bypass current cache
+
+    lower_->HandleRequest(addr, bytes, read, 
+                        content, lower_hit, lower_time);
+    
+    time += lower_time;
+    stats_.access_lower_num += 1;
 }
 
 void Cache::ReplaceAlgorithm(int set_index, uint64_t addr, int bytes, int read_or_write,
@@ -168,7 +200,7 @@ void Cache::ReplaceAlgorithm(int set_index, uint64_t addr, int bytes, int read_o
                                 set[i].dirty = 1;
                             }
 
-                            time += latency_.hit_latency;
+
                         }
                         // else    
                         // {
@@ -176,8 +208,7 @@ void Cache::ReplaceAlgorithm(int set_index, uint64_t addr, int bytes, int read_o
                         // }
                     }
 
-                    time += latency_.bus_latency;
-                    stats_.access_time = latency_.bus_latency + latency_.hit_latency;
+                    
                     
                     
                     return;
@@ -212,7 +243,6 @@ void Cache::ReplaceAlgorithm(int set_index, uint64_t addr, int bytes, int read_o
 
                 }
 
-                time += latency_.hit_latency;
 
             }
             else    // read
@@ -244,12 +274,12 @@ void Cache::ReplaceAlgorithm(int set_index, uint64_t addr, int bytes, int read_o
                                       WRITE_OPERATION, set[cnt].block, 
                                       lower_hit, lower_time);
              
-                stats_.access_time += lower_time;
+                time += lower_time;
             }
 
 
             time += latency_.bus_latency;
-            stats_.access_time = latency_.bus_latency + latency_.hit_latency;
+    
 
             return;
             break;
@@ -260,10 +290,37 @@ void Cache::ReplaceAlgorithm(int set_index, uint64_t addr, int bytes, int read_o
 
 }
 
-int Cache::PrefetchDecision() {
-    return FALSE;
+inline int Cache::PrefetchDecision() 
+{
+
+    return TRUE;
 }
 
-void Cache::PrefetchAlgorithm() {
+void Cache::PrefetchAlgorithm(uint64_t addr, int &hit,int &time) 
+{
     
+
+    stats_.prefetch_num += prefetch_blocks;
+    stats_.access_lower_num += prefetch_blocks;
+
+    for (int i = 0; i < prefetch_blocks; ++i)
+    {
+        uint64_t cur_addr = addr + prefetch_blocks * config_.block_size;
+        
+        int lower_hit = 0, lower_time = 0;
+        char *content = new char[config_.block_size];
+
+
+        lower_->HandleRequest(cur_addr, config_.block_size, READ_OPERATION, 
+                                content, lower_hit, lower_time);
+
+        time += lower_time;
+        
+
+        int set_index = (int)((cur_addr >> SET_OFFSET) & SET_MASK); 
+        ReplaceAlgorithm(set_index, cur_addr, config_.block_size, WRITE_OPERATION,
+                             content,  hit, time);
+
+        delete [] content;
+    }
 }

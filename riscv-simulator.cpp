@@ -1,4 +1,4 @@
-/*-------------
+ /*-------------
  * DEBUG MACROS
  * DEBUG: 
  * 	Enable Check Instructions
@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
 
 
 	mmu_t* mmu=new mmu_t(path);
+
 
 	int size = 32 * KB;               //输入以byte为单位
     int block = 8;

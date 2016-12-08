@@ -17,7 +17,7 @@ typedef uint32_t Elf64_Word;
 typedef uint64_t Elf64_Off;
 typedef uint64_t Elf64_Xword;
 
-const int EI_NIDENT	= 16;
+const int EI_NIDENT	= 16; 
 
 
 struct Elf64_Ehdr 	/* ELf header : 64 byte */
